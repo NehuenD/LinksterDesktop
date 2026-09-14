@@ -42,11 +42,45 @@ export const IPC = {
     windowMinimize: 'system:window-minimize',
     windowToggleMaximize: 'system:window-toggle-maximize',
     windowClose: 'system:window-close'
+  },
+  auth: {
+    getState: 'auth:get-state',
+    signInWithGoogle: 'auth:sign-in-with-google',
+    signOut: 'auth:sign-out',
+    changed: 'auth:changed'
   }
 } as const
 
 export function createPingResponse(now: number = Date.now()): PingResponse {
   return { pong: true, ts: now }
+}
+
+export const AuthStatusSchema = z.enum([
+  'initial',
+  'loading',
+  'authenticated',
+  'unauthenticated',
+  'error'
+])
+export type AuthStatus = z.infer<typeof AuthStatusSchema>
+
+export interface AuthUser {
+  id: string
+  email: string | null
+  name: string | null
+  avatarUrl: string | null
+}
+
+export interface AuthStateSnapshot {
+  status: AuthStatus
+  user: AuthUser | null
+  error: string | null
+}
+
+export const initialAuthState: AuthStateSnapshot = {
+  status: 'initial',
+  user: null,
+  error: null
 }
 
 export interface LinksterApi {
@@ -58,5 +92,11 @@ export interface LinksterApi {
     minimize(): Promise<IpcResult<true>>
     toggleMaximize(): Promise<IpcResult<boolean>>
     close(): Promise<IpcResult<true>>
+  }
+  auth: {
+    getState(): Promise<IpcResult<AuthStateSnapshot>>
+    signInWithGoogle(): Promise<IpcResult<true>>
+    signOut(): Promise<IpcResult<true>>
+    onChanged(listener: (state: AuthStateSnapshot) => void): () => void
   }
 }

@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import {
   IPC,
   type AppInfo,
+  type AuthStateSnapshot,
   type IpcResult,
   type LinksterApi,
   type PingResponse,
@@ -21,6 +22,20 @@ const api: LinksterApi = {
     minimize: () => invoke<true>(IPC.system.windowMinimize),
     toggleMaximize: () => invoke<boolean>(IPC.system.windowToggleMaximize),
     close: () => invoke<true>(IPC.system.windowClose)
+  },
+  auth: {
+    getState: () => invoke<AuthStateSnapshot>(IPC.auth.getState),
+    signInWithGoogle: () => invoke<true>(IPC.auth.signInWithGoogle),
+    signOut: () => invoke<true>(IPC.auth.signOut),
+    onChanged: (listener) => {
+      const handler = (_event: Electron.IpcRendererEvent, state: AuthStateSnapshot): void => {
+        listener(state)
+      }
+      ipcRenderer.on(IPC.auth.changed, handler)
+      return () => {
+        ipcRenderer.removeListener(IPC.auth.changed, handler)
+      }
+    }
   }
 }
 

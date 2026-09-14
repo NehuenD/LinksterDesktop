@@ -1,26 +1,60 @@
+import { resolve } from 'node:path'
 import { BrowserWindow, app } from 'electron'
+import {
+  completeSignInFromDeepLink,
+  refreshAuthState,
+  subscribeToAuthChanges
+} from './auth/auth-service'
+import { PROTOCOL, findDeepLink } from './auth/deep-link'
 import { registerIpcHandlers } from './ipc'
 import { applyThemeMode, getThemeMode } from './services/theme-service'
 import { createMainWindow } from './windows/main-window'
 
+const userDataDir = process.env['LINKSTER_USER_DATA_DIR']
+if (userDataDir) {
+  app.setPath('userData', userDataDir)
+}
+
 let mainWindow: BrowserWindow | null = null
+
+function focusMainWindow(): void {
+  if (!mainWindow) return
+  if (mainWindow.isMinimized()) mainWindow.restore()
+  mainWindow.show()
+  mainWindow.focus()
+}
+
+function registerProtocolClient(): void {
+  if (process.defaultApp && process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient(PROTOCOL, process.execPath, [resolve(process.argv[1])])
+  } else {
+    app.setAsDefaultProtocolClient(PROTOCOL)
+  }
+}
 
 const hasSingleInstanceLock = app.requestSingleInstanceLock()
 
 if (!hasSingleInstanceLock) {
   app.quit()
 } else {
-  app.on('second-instance', () => {
-    if (!mainWindow) return
-    if (mainWindow.isMinimized()) mainWindow.restore()
-    mainWindow.show()
-    mainWindow.focus()
+  registerProtocolClient()
+
+  app.on('second-instance', (_event, argv) => {
+    focusMainWindow()
+    const deepLink = findDeepLink(argv)
+    if (deepLink) void completeSignInFromDeepLink(deepLink)
   })
 
-  app.whenReady().then(() => {
+  app.on('open-url', (event, url) => {
+    event.preventDefault()
+    void completeSignInFromDeepLink(url)
+  })
+
+  app.whenReady().then(async () => {
     app.setName('Linkster')
     applyThemeMode(getThemeMode())
     registerIpcHandlers()
+    subscribeToAuthChanges()
 
     mainWindow = createMainWindow()
 
@@ -29,6 +63,11 @@ if (!hasSingleInstanceLock) {
         mainWindow = createMainWindow()
       }
     })
+
+    await refreshAuthState()
+
+    const initialDeepLink = findDeepLink(process.argv)
+    if (initialDeepLink) await completeSignInFromDeepLink(initialDeepLink)
   })
 
   app.on('window-all-closed', () => {
