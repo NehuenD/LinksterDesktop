@@ -4,6 +4,7 @@ import { api } from '../lib/api'
 interface ClipboardStore {
   monitoring: boolean
   intervalMs: number
+  native: boolean
   load: () => Promise<void>
   setMonitoring: (monitoring: boolean) => Promise<void>
 }
@@ -11,10 +12,15 @@ interface ClipboardStore {
 export const useClipboardStore = create<ClipboardStore>((set) => ({
   monitoring: false,
   intervalMs: 1000,
+  native: false,
   load: async () => {
     const result = await api.clipboard.getStatus()
     if (result.ok) {
-      set({ monitoring: result.data.monitoring, intervalMs: result.data.intervalMs })
+      set({
+        monitoring: result.data.monitoring,
+        intervalMs: result.data.intervalMs,
+        native: result.data.native
+      })
     }
   },
   setMonitoring: async (monitoring) => {

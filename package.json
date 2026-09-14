@@ -8,6 +8,8 @@
   "author": "Linkster",
   "scripts": {
     "dev": "electron-vite dev",
+    "native:build": "node-gyp rebuild -C native/clipboard-listener",
+    "native:verify": "electron scripts/verify-native-clipboard.cjs",
     "build": "npm run typecheck && electron-vite build",
     "start": "electron-vite preview",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
@@ -38,6 +40,7 @@
     "electron": "^44.3.0",
     "electron-builder": "^26.15.3",
     "electron-vite": "^5.0.0",
+    "node-addon-api": "^8.9.2",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwindcss": "^4.3.3",

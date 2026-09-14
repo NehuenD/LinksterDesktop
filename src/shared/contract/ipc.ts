@@ -166,6 +166,7 @@ export interface LabelSummary {
 export interface ClipboardStatus {
   monitoring: boolean
   intervalMs: number
+  native: boolean
 }
 
 export interface LinksterApi {
