@@ -1,10 +1,33 @@
 @import 'tailwindcss';
 
-@theme {
-  --color-rose-accent: #dc2626;
-  --color-rose-accent-light: #f43f5e;
-  --color-surface-dark: #09090b;
-  --color-surface-light: #fafafa;
+:root {
+  --surface: #09090b;
+  --surface-raised: rgba(255, 255, 255, 0.05);
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --text-primary: #fafafa;
+  --text-muted: #a1a1aa;
+  --accent: #dc2626;
+}
+
+.light {
+  --surface: #f4f4f5;
+  --surface-raised: rgba(0, 0, 0, 0.03);
+  --surface-hover: rgba(0, 0, 0, 0.06);
+  --border-subtle: rgba(0, 0, 0, 0.1);
+  --text-primary: #18181b;
+  --text-muted: #52525b;
+  --accent: #dc2626;
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-raised: var(--surface-raised);
+  --color-hover: var(--surface-hover);
+  --color-subtle: var(--border-subtle);
+  --color-primary: var(--text-primary);
+  --color-muted: var(--text-muted);
+  --color-accent: var(--accent);
   --font-display: 'Outfit', ui-sans-serif, system-ui, sans-serif;
   --font-body: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
 }
@@ -18,4 +41,6 @@ body,
 body {
   margin: 0;
   font-family: var(--font-body);
+  background-color: var(--surface);
+  color: var(--text-primary);
 }

@@ -1,8 +1,9 @@
-import { BrowserWindow, app, ipcMain } from 'electron'
+import { BrowserWindow, app, ipcMain, shell } from 'electron'
 import {
   IPC,
   ThemeModeSchema,
   createPingResponse,
+  fail,
   ok,
   type AppInfo,
   type ThemeMode
@@ -33,6 +34,14 @@ export function registerSystemHandlers(): void {
   ipcMain.handle(IPC.system.themeSet, (_event, mode: unknown) =>
     ok<ThemeMode>(setThemeMode(ThemeModeSchema.parse(mode)))
   )
+
+  ipcMain.handle(IPC.system.openExternal, async (_event, url: unknown) => {
+    if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) {
+      return fail('INVALID_URL', 'Only http(s) URLs can be opened.')
+    }
+    await shell.openExternal(url)
+    return ok(true as const)
+  })
 
   ipcMain.handle(IPC.system.windowMinimize, (event) => {
     senderWindow(event)?.minimize()

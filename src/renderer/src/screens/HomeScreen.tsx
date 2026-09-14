@@ -1,44 +1,76 @@
 import { useEffect, useState } from 'react'
-import type { AppInfo } from '@shared/contract/ipc'
-import { api } from '../lib/api'
-import { useAuthStore } from '../store/auth-store'
+import EmptyState from '../components/EmptyState'
+import LinkCard from '../components/LinkCard'
+import Sidebar from '../components/Sidebar'
+import { useLinksStore } from '../store/links-store'
 
 export default function HomeScreen() {
-  const user = useAuthStore((state) => state.user)
-  const signOut = useAuthStore((state) => state.signOut)
-  const [info, setInfo] = useState<AppInfo | null>(null)
+  const load = useLinksStore((state) => state.load)
+  const links = useLinksStore((state) => state.links)
+  const status = useLinksStore((state) => state.status)
+  const error = useLinksStore((state) => state.error)
+  const search = useLinksStore((state) => state.search)
+  const setSearch = useLinksStore((state) => state.setSearch)
+  const [text, setText] = useState(search)
 
   useEffect(() => {
-    void api.system.getAppInfo().then((result) => {
-      if (result.ok) setInfo(result.data)
-    })
-  }, [])
+    void load()
+  }, [load])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (text !== search) void setSearch(text)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [text, search, setSearch])
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-8 text-zinc-100">
-      <header className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-semibold tracking-tight">Linkster</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-zinc-400">{user?.email ?? user?.id}</span>
+    <div className="flex h-screen overflow-hidden bg-surface text-primary">
+      <Sidebar />
+
+      <main className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center gap-4 border-b border-subtle px-6 py-4">
+          <input
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+            placeholder="Search links…"
+            className="w-full max-w-md rounded-lg border border-subtle bg-raised px-3 py-2 text-sm outline-none placeholder:text-muted focus:border-accent"
+          />
           <button
             type="button"
-            onClick={() => void signOut()}
-            className="rounded-lg border border-white/10 px-3 py-1.5 text-sm transition hover:bg-white/5"
+            onClick={() => void load()}
+            className="text-sm text-muted transition hover:text-primary"
           >
-            Sign out
+            Refresh
           </button>
+        </header>
+
+        <div className="min-h-0 flex-1 overflow-y-auto p-6">
+          {error ? (
+            <div
+              role="alert"
+              className="mb-4 rounded-lg border border-accent/40 bg-accent/10 px-4 py-3 text-sm"
+            >
+              {error}
+            </div>
+          ) : null}
+
+          {status === 'loading' && links.length === 0 ? (
+            <p className="text-sm text-muted">Loading links…</p>
+          ) : links.length === 0 ? (
+            <EmptyState
+              title="No links yet"
+              description="Copy a URL anywhere and Linkster will capture it automatically."
+            />
+          ) : (
+            <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
+              {links.map((link) => (
+                <LinkCard key={link.id} link={link} />
+              ))}
+            </div>
+          )}
         </div>
-      </header>
-
-      <p className="mt-6 text-sm text-zinc-400">
-        Authenticated shell placeholder — the link library arrives in Slice 2.
-      </p>
-
-      {info ? (
-        <p className="mt-2 text-xs text-zinc-600">
-          v{info.version} · Electron {info.electron} · {info.platform}/{info.arch}
-        </p>
-      ) : null}
+      </main>
     </div>
   )
 }
