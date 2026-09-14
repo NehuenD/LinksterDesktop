@@ -29,6 +29,19 @@ export async function listLinks(query: LinkQuery = {}): Promise<Link[]> {
     )
   }
 
+  const domain = query.domain?.trim() ?? ''
+  if (domain.length > 0) {
+    request = request.ilike('url', `%${escapeSearchTerm(domain)}%`)
+  }
+
+  if (query.dateFrom) request = request.gte('created_at', query.dateFrom)
+  if (query.dateTo) request = request.lte('created_at', query.dateTo)
+
+  if (query.limit !== undefined) {
+    const offset = query.offset ?? 0
+    request = request.range(offset, offset + query.limit - 1)
+  }
+
   const { data, error } = await request
   if (error) throw new Error(error.message)
   return (data as LinkRow[]).map(mapLinkRow)
@@ -112,6 +125,21 @@ export async function updateLink(id: string, patch: UpdateLinkPatch): Promise<Li
 
 export async function deleteLink(id: string): Promise<void> {
   const { error } = await supabase.from('links').delete().eq('id', id)
+  if (error) throw new Error(error.message)
+}
+
+export async function bulkUpdateLinks(ids: string[], patch: UpdateLinkPatch): Promise<void> {
+  if (ids.length === 0) return
+  const payload = buildLinkUpdatePayload(patch)
+  if (Object.keys(payload).length === 0) throw new Error('No fields to update.')
+
+  const { error } = await supabase.from('links').update(payload).in('id', ids)
+  if (error) throw new Error(error.message)
+}
+
+export async function bulkDeleteLinks(ids: string[]): Promise<void> {
+  if (ids.length === 0) return
+  const { error } = await supabase.from('links').delete().in('id', ids)
   if (error) throw new Error(error.message)
 }
 

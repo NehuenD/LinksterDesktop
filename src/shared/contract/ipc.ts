@@ -56,6 +56,8 @@ export const IPC = {
     create: 'links:create',
     update: 'links:update',
     delete: 'links:delete',
+    bulkUpdate: 'links:bulk-update',
+    bulkDelete: 'links:bulk-delete',
     refreshMetadata: 'links:refresh-metadata',
     changed: 'links:changed'
   },
@@ -127,9 +129,16 @@ export type LinkFilter = z.infer<typeof LinkFilterSchema>
 export const LinkQuerySchema = z.object({
   filter: LinkFilterSchema.optional(),
   label: z.string().optional(),
-  search: z.string().optional()
+  search: z.string().optional(),
+  domain: z.string().optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+  limit: z.number().int().positive().max(200).optional(),
+  offset: z.number().int().nonnegative().optional()
 })
 export type LinkQuery = z.infer<typeof LinkQuerySchema>
+
+export const DEFAULT_PAGE_SIZE = 48
 
 export const CreateLinkInputSchema = z.object({
   url: z.string(),
@@ -192,6 +201,8 @@ export interface LinksterApi {
     create(input: CreateLinkInput): Promise<IpcResult<Link>>
     update(id: string, patch: UpdateLinkPatch): Promise<IpcResult<Link>>
     delete(id: string): Promise<IpcResult<true>>
+    bulkUpdate(ids: string[], patch: UpdateLinkPatch): Promise<IpcResult<true>>
+    bulkDelete(ids: string[]): Promise<IpcResult<true>>
     refreshMetadata(id: string): Promise<IpcResult<Link>>
     onChanged(listener: () => void): () => void
   }

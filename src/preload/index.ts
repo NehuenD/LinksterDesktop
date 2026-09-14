@@ -47,6 +47,8 @@ const api: LinksterApi = {
     create: (input) => invoke<Link>(IPC.links.create, input),
     update: (id, patch) => invoke<Link>(IPC.links.update, id, patch),
     delete: (id) => invoke<true>(IPC.links.delete, id),
+    bulkUpdate: (ids, patch) => invoke<true>(IPC.links.bulkUpdate, ids, patch),
+    bulkDelete: (ids) => invoke<true>(IPC.links.bulkDelete, ids),
     refreshMetadata: (id) => invoke<Link>(IPC.links.refreshMetadata, id),
     onChanged: (listener) => {
       const handler = (): void => listener()

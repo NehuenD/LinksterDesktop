@@ -8,6 +8,8 @@ import {
   ok
 } from '@shared/contract/ipc'
 import {
+  bulkDeleteLinks,
+  bulkUpdateLinks,
   createLink,
   deleteLink,
   ensureLabel,
@@ -81,6 +83,32 @@ export function registerLinkHandlers(): void {
       return ok(true as const)
     } catch (error) {
       return fail('LINKS_DELETE_FAILED', toMessage(error))
+    }
+  })
+
+  ipcMain.handle(IPC.links.bulkUpdate, async (_event, ids: unknown, patch: unknown) => {
+    try {
+      if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'string')) {
+        return fail('INVALID_IDS', 'An array of link ids is required.')
+      }
+      const parsed = UpdateLinkPatchSchema.parse(patch)
+      if (parsed.label != null) await ensureLabel(parsed.label)
+      await bulkUpdateLinks(ids as string[], parsed)
+      return ok(true as const)
+    } catch (error) {
+      return fail('LINKS_BULK_UPDATE_FAILED', toMessage(error))
+    }
+  })
+
+  ipcMain.handle(IPC.links.bulkDelete, async (_event, ids: unknown) => {
+    try {
+      if (!Array.isArray(ids) || ids.some((id) => typeof id !== 'string')) {
+        return fail('INVALID_IDS', 'An array of link ids is required.')
+      }
+      await bulkDeleteLinks(ids as string[])
+      return ok(true as const)
+    } catch (error) {
+      return fail('LINKS_BULK_DELETE_FAILED', toMessage(error))
     }
   })
 
