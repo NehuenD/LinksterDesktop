@@ -64,6 +64,9 @@ export function registerLinkHandlers(): void {
         if (!validation.valid) return fail('INVALID_URL', validation.reason)
         parsed.url = validation.url
       }
+      if (parsed.label != null) {
+        await ensureLabel(parsed.label)
+      }
 
       return ok(await updateLink(id, parsed))
     } catch (error) {

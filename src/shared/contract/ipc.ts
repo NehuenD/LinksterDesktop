@@ -61,7 +61,10 @@ export const IPC = {
   },
   labels: {
     list: 'labels:list',
-    create: 'labels:create'
+    create: 'labels:create',
+    rename: 'labels:rename',
+    merge: 'labels:merge',
+    delete: 'labels:delete'
   },
   clipboard: {
     getStatus: 'clipboard:get-status',
@@ -194,6 +197,9 @@ export interface LinksterApi {
   labels: {
     list(): Promise<IpcResult<string[]>>
     create(name: string): Promise<IpcResult<string[]>>
+    rename(oldName: string, newName: string): Promise<IpcResult<string[]>>
+    merge(source: string, target: string): Promise<IpcResult<string[]>>
+    delete(name: string): Promise<IpcResult<string[]>>
   }
   clipboard: {
     getStatus(): Promise<IpcResult<ClipboardStatus>>

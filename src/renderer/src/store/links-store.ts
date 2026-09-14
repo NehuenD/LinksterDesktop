@@ -30,6 +30,9 @@ interface LinksStore {
   deleteLink: (id: string) => Promise<IpcResult<true>>
   refreshMetadata: (id: string) => Promise<IpcResult<Link>>
   createLabel: (name: string) => Promise<IpcResult<string[]>>
+  renameLabel: (oldName: string, newName: string) => Promise<IpcResult<string[]>>
+  mergeLabel: (source: string, target: string) => Promise<IpcResult<string[]>>
+  deleteLabel: (name: string) => Promise<IpcResult<string[]>>
 }
 
 export const useLinksStore = create<LinksStore>((set, get) => ({
@@ -112,6 +115,33 @@ export const useLinksStore = create<LinksStore>((set, get) => ({
   createLabel: async (name) => {
     const result = await api.labels.create(name)
     if (result.ok) set({ labels: result.data })
+    return result
+  },
+
+  renameLabel: async (oldName, newName) => {
+    const result = await api.labels.rename(oldName, newName)
+    if (result.ok) {
+      set({ labels: result.data })
+      await get().load()
+    }
+    return result
+  },
+
+  mergeLabel: async (source, target) => {
+    const result = await api.labels.merge(source, target)
+    if (result.ok) {
+      set({ labels: result.data })
+      await get().load()
+    }
+    return result
+  },
+
+  deleteLabel: async (name) => {
+    const result = await api.labels.delete(name)
+    if (result.ok) {
+      set({ labels: result.data })
+      await get().load()
+    }
     return result
   }
 }))

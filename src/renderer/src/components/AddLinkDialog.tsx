@@ -14,7 +14,7 @@ export default function AddLinkDialog({ onClose }: { onClose: () => void }) {
   const submit = async () => {
     setBusy(true)
     setError(null)
-    const result = await createLink({ url, label })
+    const result = await createLink({ url, label: label.trim().length > 0 ? label : DEFAULT_LABEL })
     setBusy(false)
     if (result.ok) {
       onClose()
@@ -43,18 +43,18 @@ export default function AddLinkDialog({ onClose }: { onClose: () => void }) {
         </Field>
 
         <Field label="Label">
-          <select
+          <input
+            list="add-label-options"
             value={label}
             onChange={(event) => setLabel(event.target.value)}
+            placeholder={DEFAULT_LABEL}
             className={inputClass}
-          >
+          />
+          <datalist id="add-label-options">
             {labels.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
+              <option key={name} value={name} />
             ))}
-            {labels.includes(label) ? null : <option value={label}>{label}</option>}
-          </select>
+          </datalist>
         </Field>
 
         {error ? (

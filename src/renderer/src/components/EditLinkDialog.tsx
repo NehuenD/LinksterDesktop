@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Link } from '@shared/contract/ipc'
+import { DEFAULT_LABEL, type Link } from '@shared/contract/ipc'
 import { useLinksStore } from '../store/links-store'
 import { Field, Modal, inputClass, primaryButtonClass, secondaryButtonClass } from './ui'
 
@@ -22,7 +22,7 @@ export default function EditLinkDialog({ link, onClose }: { link: Link; onClose:
       url,
       title: title.trim().length > 0 ? title.trim() : null,
       description: description.trim().length > 0 ? description.trim() : null,
-      label
+      label: label.trim().length > 0 ? label : DEFAULT_LABEL
     })
     setBusy(false)
     if (result.ok) {
@@ -67,18 +67,18 @@ export default function EditLinkDialog({ link, onClose }: { link: Link; onClose:
           />
         </Field>
         <Field label="Label">
-          <select
+          <input
+            list="edit-label-options"
             value={label}
-            onChange={(e) => setLabel(e.target.value)}
+            onChange={(event) => setLabel(event.target.value)}
+            placeholder={DEFAULT_LABEL}
             className={inputClass}
-          >
+          />
+          <datalist id="edit-label-options">
             {labels.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
+              <option key={name} value={name} />
             ))}
-            {labels.includes(label) ? null : <option value={label}>{label}</option>}
-          </select>
+          </datalist>
         </Field>
 
         {error ? (

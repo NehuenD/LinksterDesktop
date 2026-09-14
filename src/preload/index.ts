@@ -58,7 +58,10 @@ const api: LinksterApi = {
   },
   labels: {
     list: () => invoke<string[]>(IPC.labels.list),
-    create: (name) => invoke<string[]>(IPC.labels.create, name)
+    create: (name) => invoke<string[]>(IPC.labels.create, name),
+    rename: (oldName, newName) => invoke<string[]>(IPC.labels.rename, oldName, newName),
+    merge: (source, target) => invoke<string[]>(IPC.labels.merge, source, target),
+    delete: (name) => invoke<string[]>(IPC.labels.delete, name)
   },
   clipboard: {
     getStatus: () => invoke<ClipboardStatus>(IPC.clipboard.getStatus),
