@@ -3,6 +3,7 @@ import { DEFAULT_LABEL } from '@shared/contract/ipc'
 import {
   computeStats,
   mapLinkRow,
+  mapLinkRows,
   normalizeLabel,
   type LinkRow
 } from '../../src/main/data/link-mapper'
@@ -70,6 +71,18 @@ describe('normalizeLabel', () => {
   })
 })
 
+describe('mapLinkRows', () => {
+  it('skips malformed rows instead of failing the page', () => {
+    const rows: LinkRow[] = [
+      baseRow,
+      { ...baseRow, id: undefined as unknown as string },
+      { ...baseRow, id: 'id-2', url: 'https://second.example' }
+    ]
+    const links = mapLinkRows(rows)
+    expect(links.map((link) => link.id)).toEqual(['id-1', 'id-2'])
+  })
+})
+
 describe('computeStats', () => {
   it('aggregates totals and per-label counts', () => {
     const stats = computeStats([
@@ -83,5 +96,11 @@ describe('computeStats', () => {
       archived: 1,
       byLabel: { General: 2, News: 1 }
     })
+  })
+
+  it('excludes archived items from the unread count', () => {
+    const stats = computeStats([{ label: 'General', isRead: false, isArchived: true }])
+    expect(stats.unread).toBe(0)
+    expect(stats.archived).toBe(1)
   })
 })

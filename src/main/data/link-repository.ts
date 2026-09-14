@@ -1,7 +1,14 @@
 import { randomUUID } from 'node:crypto'
 import type { CreateLinkInput, Link, LinkQuery, LinkStats, UpdateLinkPatch } from '@shared/contract/ipc'
 import { supabase } from '../auth/supabase'
-import { computeStats, buildLinkUpdatePayload, mapLinkRow, normalizeLabel, type LinkRow } from './link-mapper'
+import {
+  buildLinkUpdatePayload,
+  computeStats,
+  mapLinkRow,
+  mapLinkRows,
+  normalizeLabel,
+  type LinkRow
+} from './link-mapper'
 import { normalizeUrl } from './url-normalizer'
 
 const LINK_COLUMNS =
@@ -17,7 +24,9 @@ export async function listLinks(query: LinkQuery = {}): Promise<Link[]> {
     .select(LINK_COLUMNS)
     .order('created_at', { ascending: false })
 
-  if (query.filter === 'unread') request = request.eq('is_read', false)
+  if (query.filter === 'unread') {
+    request = request.eq('is_read', false).eq('is_archived', false)
+  }
   if (query.filter === 'archived') request = request.eq('is_archived', true)
   if (query.label) request = request.eq('label', query.label)
 
@@ -44,7 +53,7 @@ export async function listLinks(query: LinkQuery = {}): Promise<Link[]> {
 
   const { data, error } = await request
   if (error) throw new Error(error.message)
-  return (data as LinkRow[]).map(mapLinkRow)
+  return mapLinkRows(data as LinkRow[])
 }
 
 interface StatsRow {

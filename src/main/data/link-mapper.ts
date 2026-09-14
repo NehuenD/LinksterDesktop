@@ -66,6 +66,18 @@ export function buildLinkUpdatePayload(patch: LinkPatchLike): Record<string, unk
   return payload
 }
 
+export function mapLinkRows(rows: readonly LinkRow[]): Link[] {
+  const links: Link[] = []
+  for (const row of rows) {
+    try {
+      links.push(mapLinkRow(row))
+    } catch {
+      // Skip malformed rows instead of failing the whole page.
+    }
+  }
+  return links
+}
+
 export function computeStats(
   links: readonly Pick<Link, 'label' | 'isRead' | 'isArchived'>[]
 ): LinkStats {
@@ -75,7 +87,7 @@ export function computeStats(
 
   for (const link of links) {
     byLabel[link.label] = (byLabel[link.label] ?? 0) + 1
-    if (!link.isRead) unread += 1
+    if (!link.isRead && !link.isArchived) unread += 1
     if (link.isArchived) archived += 1
   }
 
