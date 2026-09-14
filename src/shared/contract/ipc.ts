@@ -72,6 +72,14 @@ export const IPC = {
     getStatus: 'clipboard:get-status',
     setMonitoring: 'clipboard:set-monitoring',
     captured: 'clipboard:captured'
+  },
+  settings: {
+    getNotifications: 'settings:get-notifications',
+    setNotifications: 'settings:set-notifications'
+  },
+  data: {
+    export: 'data:export',
+    copyAll: 'data:copy-all'
   }
 } as const
 
@@ -178,6 +186,25 @@ export interface ClipboardStatus {
   native: boolean
 }
 
+export interface NotificationPreferences {
+  notifyOnLinkCapture: boolean
+  notifyOnScreenshot: boolean
+}
+
+export const NotificationPreferencesPatchSchema = z.object({
+  notifyOnLinkCapture: z.boolean().optional(),
+  notifyOnScreenshot: z.boolean().optional()
+})
+export type NotificationPreferencesPatch = z.infer<typeof NotificationPreferencesPatchSchema>
+
+export const ExportFormatSchema = z.enum(['json', 'csv'])
+export type ExportFormat = z.infer<typeof ExportFormatSchema>
+
+export interface ExportResult {
+  path: string
+  count: number
+}
+
 export interface LinksterApi {
   system: {
     ping(): Promise<IpcResult<PingResponse>>
@@ -216,5 +243,15 @@ export interface LinksterApi {
   clipboard: {
     getStatus(): Promise<IpcResult<ClipboardStatus>>
     setMonitoring(monitoring: boolean): Promise<IpcResult<boolean>>
+  }
+  settings: {
+    getNotifications(): Promise<IpcResult<NotificationPreferences>>
+    setNotifications(
+      patch: NotificationPreferencesPatch
+    ): Promise<IpcResult<NotificationPreferences>>
+  }
+  data: {
+    export(format: ExportFormat): Promise<IpcResult<ExportResult>>
+    copyAll(): Promise<IpcResult<number>>
   }
 }

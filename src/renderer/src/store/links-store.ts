@@ -11,6 +11,7 @@ import {
   type UpdateLinkPatch
 } from '@shared/contract/ipc'
 import { api } from '../lib/api'
+import { reportError } from './toast-store'
 
 const emptyStats: LinkStats = { total: 0, unread: 0, archived: 0, byLabel: {} }
 
@@ -169,12 +170,14 @@ export const useLinksStore = create<LinksStore>((set, get) => ({
   createLink: async (input) => {
     const result = await api.links.create(input)
     if (result.ok) await get().load()
+    else reportError(result.error.message)
     return result
   },
 
   updateLink: async (id, patch) => {
     const result = await api.links.update(id, patch)
     if (result.ok) await get().load()
+    else reportError(result.error.message)
     return result
   },
 
@@ -184,6 +187,8 @@ export const useLinksStore = create<LinksStore>((set, get) => ({
     if (result.ok) {
       if (link) set({ lastDeleted: [link] })
       await get().load()
+    } else {
+      reportError(result.error.message)
     }
     return result
   },
@@ -196,6 +201,8 @@ export const useLinksStore = create<LinksStore>((set, get) => ({
     if (result.ok) {
       set({ selectedIds: [] })
       await get().load()
+    } else {
+      reportError(result.error.message)
     }
     return result
   },
@@ -209,6 +216,8 @@ export const useLinksStore = create<LinksStore>((set, get) => ({
     if (result.ok) {
       set({ selectedIds: [], lastDeleted: snapshot })
       await get().load()
+    } else {
+      reportError(result.error.message)
     }
     return result
   },
@@ -216,6 +225,7 @@ export const useLinksStore = create<LinksStore>((set, get) => ({
   refreshMetadata: async (id) => {
     const result = await api.links.refreshMetadata(id)
     if (result.ok) await get().load()
+    else reportError(result.error.message)
     return result
   },
 

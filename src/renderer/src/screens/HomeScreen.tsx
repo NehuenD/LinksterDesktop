@@ -11,6 +11,8 @@ import { api } from '../lib/api'
 import { useGlobalShortcuts } from '../lib/use-global-shortcuts'
 import { useClipboardStore } from '../store/clipboard-store'
 import { useLinksStore } from '../store/links-store'
+import { useUiStore } from '../store/ui-store'
+import SettingsScreen from './SettingsScreen'
 
 export default function HomeScreen() {
   const load = useLinksStore((state) => state.load)
@@ -25,10 +27,12 @@ export default function HomeScreen() {
   const monitoring = useClipboardStore((state) => state.monitoring)
   const loadClipboard = useClipboardStore((state) => state.load)
   const setMonitoring = useClipboardStore((state) => state.setMonitoring)
+  const view = useUiStore((state) => state.view)
+  const paletteOpen = useUiStore((state) => state.paletteOpen)
+  const setPaletteOpen = useUiStore((state) => state.setPaletteOpen)
 
   const [text, setText] = useState(search)
   const [adding, setAdding] = useState(false)
-  const [paletteOpen, setPaletteOpen] = useState(false)
 
   useGlobalShortcuts({
     onOpenPalette: () => setPaletteOpen(true),
@@ -52,6 +56,10 @@ export default function HomeScreen() {
     }, 300)
     return () => clearTimeout(timer)
   }, [text, search, setSearch])
+
+  if (view === 'settings') {
+    return <SettingsScreen />
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface text-primary">

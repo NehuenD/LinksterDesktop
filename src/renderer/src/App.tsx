@@ -1,4 +1,6 @@
 import { useEffect } from 'react'
+import ErrorBoundary from './components/ErrorBoundary'
+import Toaster from './components/Toaster'
 import { api } from './lib/api'
 import HomeScreen from './screens/HomeScreen'
 import LoginScreen from './screens/LoginScreen'
@@ -26,17 +28,21 @@ export default function App() {
     return () => query.removeEventListener('change', sync)
   }, [mode])
 
-  if (status === 'initial') {
-    return (
+  const content =
+    status === 'initial' ? (
       <div className="flex min-h-screen items-center justify-center bg-surface text-sm text-muted">
         Loading…
       </div>
+    ) : status === 'authenticated' ? (
+      <HomeScreen />
+    ) : (
+      <LoginScreen />
     )
-  }
 
-  if (status === 'authenticated') {
-    return <HomeScreen />
-  }
-
-  return <LoginScreen />
+  return (
+    <>
+      <ErrorBoundary>{content}</ErrorBoundary>
+      <Toaster />
+    </>
+  )
 }

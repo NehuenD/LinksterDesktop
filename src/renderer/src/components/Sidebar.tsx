@@ -4,6 +4,7 @@ import { labelColor } from '@shared/lib/label-color'
 import { useAuthStore } from '../store/auth-store'
 import { useLinksStore } from '../store/links-store'
 import { useThemeStore } from '../store/theme-store'
+import { useUiStore } from '../store/ui-store'
 import LabelManagerDialog from './LabelManagerDialog'
 
 const THEME_MODES: ThemeMode[] = ['system', 'light', 'dark']
@@ -41,6 +42,7 @@ export default function Sidebar() {
   const signOut = useAuthStore((state) => state.signOut)
   const mode = useThemeStore((state) => state.mode)
   const setMode = useThemeStore((state) => state.setMode)
+  const setView = useUiStore((state) => state.setView)
   const [managingLabels, setManagingLabels] = useState(false)
 
   const filters: Array<{ key: LinkFilter; label: string; count: number }> = [
@@ -63,7 +65,10 @@ export default function Sidebar() {
               active={filter === item.key}
               label={item.label}
               count={item.count}
-              onClick={() => void setFilter(item.key)}
+              onClick={() => {
+                setView('library')
+                void setFilter(item.key)
+              }}
             />
           ))}
         </nav>
@@ -86,7 +91,10 @@ export default function Sidebar() {
               <button
                 key={label}
                 type="button"
-                onClick={() => void setLabel(selectedLabel === label ? null : label)}
+                onClick={() => {
+                  setView('library')
+                  void setLabel(selectedLabel === label ? null : label)
+                }}
                 className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
                   selectedLabel === label ? 'bg-hover text-primary' : 'text-muted hover:bg-hover'
                 }`}
@@ -103,6 +111,13 @@ export default function Sidebar() {
         </div>
 
         <div className="border-t border-subtle p-3">
+          <button
+            type="button"
+            onClick={() => setView('settings')}
+            className="mb-2 w-full rounded-lg px-3 py-2 text-left text-sm text-muted transition hover:bg-hover hover:text-primary"
+          >
+            Settings
+          </button>
           <div className="mb-2 flex gap-1">
             {THEME_MODES.map((value) => (
               <button

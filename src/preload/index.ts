@@ -4,10 +4,12 @@ import {
   type AppInfo,
   type AuthStateSnapshot,
   type ClipboardStatus,
+  type ExportResult,
   type IpcResult,
   type Link,
   type LinkStats,
   type LinksterApi,
+  type NotificationPreferences,
   type PingResponse,
   type ThemeMode
 } from '@shared/contract/ipc'
@@ -68,6 +70,15 @@ const api: LinksterApi = {
   clipboard: {
     getStatus: () => invoke<ClipboardStatus>(IPC.clipboard.getStatus),
     setMonitoring: (monitoring) => invoke<boolean>(IPC.clipboard.setMonitoring, monitoring)
+  },
+  settings: {
+    getNotifications: () => invoke<NotificationPreferences>(IPC.settings.getNotifications),
+    setNotifications: (patch) =>
+      invoke<NotificationPreferences>(IPC.settings.setNotifications, patch)
+  },
+  data: {
+    export: (format) => invoke<ExportResult>(IPC.data.export, format),
+    copyAll: () => invoke<number>(IPC.data.copyAll)
   }
 }
 
