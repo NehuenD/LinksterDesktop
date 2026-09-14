@@ -1,6 +1,6 @@
 import { BrowserWindow, Notification } from 'electron'
 import { IPC } from '@shared/contract/ipc'
-import { createLink, ensureLabel, linkExists } from '../data/link-repository'
+import { createLink, ensureLabel, isUniqueViolation, linkExists } from '../data/link-repository'
 import { store } from '../store/store'
 import { fetchMetadata } from './metadata-service'
 import { validateUrl } from './url-validator'
@@ -32,13 +32,20 @@ export async function captureUrl(rawUrl: string): Promise<CaptureResult> {
 
   const metadata = await fetchMetadata(validation.url)
   const label = await ensureLabel('General')
-  const link = await createLink({
-    url: validation.url,
-    title: metadata.title,
-    description: metadata.description,
-    thumbnailUrl: metadata.thumbnailUrl,
-    label
-  })
+
+  let link
+  try {
+    link = await createLink({
+      url: validation.url,
+      title: metadata.title,
+      description: metadata.description,
+      thumbnailUrl: metadata.thumbnailUrl,
+      label
+    })
+  } catch (error) {
+    if (isUniqueViolation(error)) return { captured: false, reason: 'duplicate' }
+    throw error
+  }
 
   broadcastLinksChanged()
   showCaptureNotification(link.title ?? validation.url)

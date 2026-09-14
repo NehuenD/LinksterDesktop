@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { DEFAULT_LABEL } from '@shared/contract/ipc'
 import { useLinksStore } from '../store/links-store'
-import { Field, Modal, inputClass, primaryButtonClass, secondaryButtonClass } from './ui'
+import { Field, Modal } from './ui'
+import { inputClass, primaryButtonClass, secondaryButtonClass } from './ui-classes'
 
 export default function AddLinkDialog({ onClose }: { onClose: () => void }) {
   const createLink = useLinksStore((state) => state.createLink)

@@ -56,16 +56,31 @@ export function setScreenshotFolder(folder: string | null): string | null {
   return getScreenshotFolder()
 }
 
-async function thumbnailFor(filePath: string): Promise<string | null> {
+interface ThumbnailCacheEntry {
+  mtimeMs: number
+  dataUrl: string | null
+}
+
+const thumbnailCache = new Map<string, ThumbnailCacheEntry>()
+
+async function thumbnailFor(filePath: string, mtimeMs: number): Promise<string | null> {
+  const cached = thumbnailCache.get(filePath)
+  if (cached && cached.mtimeMs === mtimeMs) return cached.dataUrl
+
+  let dataUrl: string | null = null
   try {
     const image = nativeImage.createFromPath(filePath)
-    if (image.isEmpty()) return null
-    const { width } = image.getSize()
-    const resized = width > THUMBNAIL_WIDTH ? image.resize({ width: THUMBNAIL_WIDTH }) : image
-    return resized.toDataURL()
+    if (!image.isEmpty()) {
+      const { width } = image.getSize()
+      const resized = width > THUMBNAIL_WIDTH ? image.resize({ width: THUMBNAIL_WIDTH }) : image
+      dataUrl = resized.toDataURL()
+    }
   } catch {
-    return null
+    dataUrl = null
   }
+
+  thumbnailCache.set(filePath, { mtimeMs, dataUrl })
+  return dataUrl
 }
 
 export async function listScreenshots(): Promise<Screenshot[]> {
@@ -81,22 +96,29 @@ export async function listScreenshots(): Promise<Screenshot[]> {
   }
 
   const screenshots: Screenshot[] = []
+  const seen = new Set<string>()
+
   for (const name of entries) {
     if (!isScreenshotName(name, custom)) continue
     const filePath = join(folder, name)
     try {
       const stat = await fs.stat(filePath)
       if (!stat.isFile()) continue
+      seen.add(filePath)
       screenshots.push({
         id: createHash('sha1').update(filePath).digest('hex'),
         filePath,
         fileName: name,
         capturedAt: stat.mtime.toISOString(),
-        thumbnailUrl: await thumbnailFor(filePath)
+        thumbnailUrl: await thumbnailFor(filePath, stat.mtimeMs)
       })
     } catch {
       // Skip unreadable entries.
     }
+  }
+
+  for (const cachedPath of thumbnailCache.keys()) {
+    if (!seen.has(cachedPath)) thumbnailCache.delete(cachedPath)
   }
 
   return sortNewestFirst(screenshots)
@@ -106,7 +128,11 @@ function isWithinFolder(filePath: string): boolean {
   const folder = getScreenshotFolder()
   if (!folder) return false
   const root = resolve(folder.endsWith(sep) ? folder : folder + sep)
-  return resolve(filePath).startsWith(root)
+  const target = resolve(filePath)
+  if (process.platform === 'win32') {
+    return target.toLowerCase().startsWith(root.toLowerCase())
+  }
+  return target.startsWith(root)
 }
 
 export async function revealScreenshot(filePath: string): Promise<void> {
@@ -115,6 +141,7 @@ export async function revealScreenshot(filePath: string): Promise<void> {
 }
 
 export async function copyScreenshotPath(filePath: string): Promise<void> {
+  if (!isWithinFolder(filePath)) throw new Error('Path is outside the screenshots folder.')
   await clipboard.writeText(filePath)
 }
 

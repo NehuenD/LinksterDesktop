@@ -49,12 +49,20 @@ export function isPrivateHost(host: string): boolean {
   return isPrivateIpv4(normalized)
 }
 
+function hasControlCharacters(value: string): boolean {
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    if (code <= 0x1f || code === 0x7f) return true
+  }
+  return false
+}
+
 export function validateUrl(raw: string): UrlValidationResult {
   const trimmed = raw.trim()
 
   if (trimmed.length === 0) return { valid: false, reason: 'URL is empty.' }
   if (trimmed.length > MAX_URL_LENGTH) return { valid: false, reason: 'URL is too long.' }
-  if (/[\u0000-\u001F\u007F]/.test(trimmed)) {
+  if (hasControlCharacters(trimmed)) {
     return { valid: false, reason: 'URL contains control characters.' }
   }
 

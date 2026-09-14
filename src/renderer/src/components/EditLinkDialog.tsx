@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { DEFAULT_LABEL, type Link } from '@shared/contract/ipc'
 import { useLinksStore } from '../store/links-store'
-import { Field, Modal, inputClass, primaryButtonClass, secondaryButtonClass } from './ui'
+import { Field, Modal } from './ui'
+import { inputClass, primaryButtonClass, secondaryButtonClass } from './ui-classes'
 
 export default function EditLinkDialog({ link, onClose }: { link: Link; onClose: () => void }) {
   const updateLink = useLinksStore((state) => state.updateLink)

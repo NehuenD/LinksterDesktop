@@ -85,6 +85,25 @@ export async function getLinkById(id: string): Promise<Link | null> {
   return data ? mapLinkRow(data as LinkRow) : null
 }
 
+const EXPORT_PAGE_SIZE = 1000
+const EXPORT_MAX_PAGES = 100
+
+/**
+ * Fetches every link for the user by paging past PostgREST's default row cap.
+ */
+export async function listAllLinks(): Promise<Link[]> {
+  const all: Link[] = []
+
+  for (let page = 0; page < EXPORT_MAX_PAGES; page += 1) {
+    const offset = page * EXPORT_PAGE_SIZE
+    const batch = await listLinks({ limit: EXPORT_PAGE_SIZE, offset })
+    all.push(...batch)
+    if (batch.length < EXPORT_PAGE_SIZE) break
+  }
+
+  return all
+}
+
 export async function linkExists(rawUrl: string): Promise<boolean> {
   const normalized = normalizeUrl(rawUrl)
   const { data, error } = await supabase
@@ -95,6 +114,20 @@ export async function linkExists(rawUrl: string): Promise<boolean> {
     .maybeSingle()
   if (error) throw new Error(error.message)
   return data !== null
+}
+
+export class DatabaseError extends Error {
+  readonly code?: string
+
+  constructor(message: string, code?: string) {
+    super(message)
+    this.name = 'DatabaseError'
+    this.code = code
+  }
+}
+
+export function isUniqueViolation(error: unknown): boolean {
+  return error instanceof DatabaseError && error.code === '23505'
 }
 
 export async function createLink(input: CreateLinkInput): Promise<Link> {
@@ -111,7 +144,7 @@ export async function createLink(input: CreateLinkInput): Promise<Link> {
     .select(LINK_COLUMNS)
     .single()
 
-  if (error) throw new Error(error.message)
+  if (error) throw new DatabaseError(error.message, error.code ?? undefined)
   return mapLinkRow(data as LinkRow)
 }
 

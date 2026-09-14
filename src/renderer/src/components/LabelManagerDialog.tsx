@@ -4,7 +4,8 @@ import { labelColor } from '@shared/lib/label-color'
 import { isProtectedLabel } from '@shared/lib/labels'
 import { useLinksStore } from '../store/links-store'
 import ConfirmDialog from './ConfirmDialog'
-import { Modal, inputClass, primaryButtonClass, secondaryButtonClass } from './ui'
+import { Modal } from './ui'
+import { inputClass, primaryButtonClass, secondaryButtonClass } from './ui-classes'
 
 export default function LabelManagerDialog({ onClose }: { onClose: () => void }) {
   const labels = useLinksStore((state) => state.labels)

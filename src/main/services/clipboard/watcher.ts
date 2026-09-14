@@ -10,15 +10,14 @@ export interface ClipboardWatcherDeps {
   intervalMs?: number
 }
 
-export const DEFAULT_POLL_INTERVAL_MS = 1000
+export const POLL_INTERVAL_MS = 1000
 
 /**
  * Timer-based clipboard watcher. Works on every platform with no native
- * dependency. The factory below can swap in an event-driven native addon
- * behind this same interface.
+ * dependency; used when the native event addon is unavailable.
  */
 export function createPollingWatcher(deps: ClipboardWatcherDeps): ClipboardWatcher {
-  const intervalMs = deps.intervalMs ?? DEFAULT_POLL_INTERVAL_MS
+  const intervalMs = deps.intervalMs ?? POLL_INTERVAL_MS
   let timer: ReturnType<typeof setInterval> | null = null
   let last: string | null = null
   let reading = false
@@ -53,20 +52,4 @@ export function createPollingWatcher(deps: ClipboardWatcherDeps): ClipboardWatch
       return timer !== null
     }
   }
-}
-
-export interface ClipboardWatcherFactoryDeps extends ClipboardWatcherDeps {
-  createNative?: () => ClipboardWatcher | null
-}
-
-export function createClipboardWatcher(deps: ClipboardWatcherFactoryDeps): ClipboardWatcher {
-  if (deps.createNative) {
-    try {
-      const native = deps.createNative()
-      if (native) return native
-    } catch {
-      // Native addon unavailable; fall through to polling.
-    }
-  }
-  return createPollingWatcher(deps)
 }

@@ -6,6 +6,17 @@ import { OAUTH_CALLBACK_URL, parseAuthCallback } from './deep-link'
 import { isSupabaseConfigured, supabase } from './supabase'
 import { startRealtime, stopRealtime } from '../services/realtime-service'
 
+const SIGN_IN_TIMEOUT_MS = 120_000
+
+let signInTimeout: ReturnType<typeof setTimeout> | null = null
+
+function clearSignInTimeout(): void {
+  if (signInTimeout) {
+    clearTimeout(signInTimeout)
+    signInTimeout = null
+  }
+}
+
 function toAuthUser(user: User | null | undefined): AuthUser | null {
   if (!user) return null
   const metadata = user.user_metadata ?? {}
@@ -22,12 +33,17 @@ function applyAuth(state: {
   user: AuthUser | null
   error: string | null
 }): void {
+  if (state.status !== 'loading') clearSignInTimeout()
   setAuthState(state)
   if (state.status === 'authenticated') {
     startRealtime()
   } else if (state.status === 'unauthenticated') {
     stopRealtime()
   }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
 }
 
 export async function refreshAuthState(): Promise<void> {
@@ -74,16 +90,29 @@ export async function signInWithGoogle(): Promise<void> {
 
   applyAuth({ status: 'loading', user: getAuthState().user, error: null })
 
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: OAUTH_CALLBACK_URL,
-      skipBrowserRedirect: true
+  clearSignInTimeout()
+  signInTimeout = setTimeout(() => {
+    signInTimeout = null
+    if (getAuthState().status === 'loading') {
+      applyAuth({ status: 'unauthenticated', user: null, error: null })
     }
-  })
+  }, SIGN_IN_TIMEOUT_MS)
 
-  if (error) throw new Error(error.message)
-  if (data.url) await shell.openExternal(data.url)
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: OAUTH_CALLBACK_URL,
+        skipBrowserRedirect: true
+      }
+    })
+
+    if (error) throw new Error(error.message)
+    if (data.url) await shell.openExternal(data.url)
+  } catch (error) {
+    applyAuth({ status: 'unauthenticated', user: null, error: errorMessage(error) })
+    throw error
+  }
 }
 
 export async function completeSignInFromDeepLink(url: string): Promise<void> {

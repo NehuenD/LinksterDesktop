@@ -3,7 +3,7 @@ import { store } from '../store/store'
 import { captureUrl } from './capture-service'
 import { ClipboardCapturePipeline } from './clipboard/capture-pipeline'
 import { createNativeWatcher } from './clipboard/native-addon'
-import { createPollingWatcher, type ClipboardWatcher } from './clipboard/watcher'
+import { POLL_INTERVAL_MS, createPollingWatcher, type ClipboardWatcher } from './clipboard/watcher'
 
 let watcher: ClipboardWatcher | null = null
 let pipeline: ClipboardCapturePipeline | null = null
@@ -18,7 +18,7 @@ export function isUsingNativeWatcher(): boolean {
 }
 
 export function pollingIntervalMs(): number {
-  return 1000
+  return POLL_INTERVAL_MS
 }
 
 function buildWatcher(onChange: (text: string) => void): ClipboardWatcher {

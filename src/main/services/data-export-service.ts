@@ -2,7 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { app, clipboard } from 'electron'
 import type { ExportFormat, ExportResult } from '@shared/contract/ipc'
-import { listLinks } from '../data/link-repository'
+import { listAllLinks } from '../data/link-repository'
 import { linksToCsv, linksToJson, linksToText } from './export-format'
 
 function timestamp(): string {
@@ -10,7 +10,7 @@ function timestamp(): string {
 }
 
 export async function exportLinks(format: ExportFormat): Promise<ExportResult> {
-  const links = await listLinks({})
+  const links = await listAllLinks()
   const directory = join(app.getPath('documents'), 'Linkster')
   await mkdir(directory, { recursive: true })
 
@@ -22,7 +22,7 @@ export async function exportLinks(format: ExportFormat): Promise<ExportResult> {
 }
 
 export async function copyAllLinks(): Promise<number> {
-  const links = await listLinks({})
+  const links = await listAllLinks()
   await clipboard.writeText(linksToText(links))
   return links.length
 }

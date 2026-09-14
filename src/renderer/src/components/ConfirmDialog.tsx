@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Modal, primaryButtonClass, secondaryButtonClass } from './ui'
+import { Modal } from './ui'
+import { primaryButtonClass, secondaryButtonClass } from './ui-classes'
 
 interface ConfirmDialogProps {
   title: string

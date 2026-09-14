@@ -74,8 +74,8 @@ function buildQuery(
   if (state.selectedLabel) query.label = state.selectedLabel
   if (state.search.trim().length > 0) query.search = state.search.trim()
   if (state.domain.trim().length > 0) query.domain = state.domain.trim()
-  if (state.dateFrom) query.dateFrom = `${state.dateFrom}T00:00:00.000Z`
-  if (state.dateTo) query.dateTo = `${state.dateTo}T23:59:59.999Z`
+  if (state.dateFrom) query.dateFrom = new Date(`${state.dateFrom}T00:00:00`).toISOString()
+  if (state.dateTo) query.dateTo = new Date(`${state.dateTo}T23:59:59.999`).toISOString()
   return query
 }
 
@@ -97,7 +97,7 @@ export const useLinksStore = create<LinksStore>((set, get) => ({
   lastDeleted: null,
 
   load: async () => {
-    set({ status: 'loading', error: null, selectedIds: [] })
+    set({ status: 'loading', error: null })
     const state = get()
 
     const [linksResult, statsResult, labelsResult] = await Promise.all([
@@ -138,32 +138,32 @@ export const useLinksStore = create<LinksStore>((set, get) => ({
   },
 
   setFilter: async (filter) => {
-    set({ filter })
+    set({ filter, selectedIds: [] })
     await get().load()
   },
 
   setLabel: async (label) => {
-    set({ selectedLabel: label })
+    set({ selectedLabel: label, selectedIds: [] })
     await get().load()
   },
 
   setSearch: async (search) => {
-    set({ search })
+    set({ search, selectedIds: [] })
     await get().load()
   },
 
   setDomain: async (domain) => {
-    set({ domain })
+    set({ domain, selectedIds: [] })
     await get().load()
   },
 
   setDateRange: async (dateFrom, dateTo) => {
-    set({ dateFrom, dateTo })
+    set({ dateFrom, dateTo, selectedIds: [] })
     await get().load()
   },
 
   clearAdvancedFilters: async () => {
-    set({ domain: '', dateFrom: null, dateTo: null })
+    set({ domain: '', dateFrom: null, dateTo: null, selectedIds: [] })
     await get().load()
   },
 

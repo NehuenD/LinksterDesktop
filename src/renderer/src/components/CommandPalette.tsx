@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { filterPaletteItems, type PaletteItem } from '@shared/lib/palette'
 import { api } from '../lib/api'
 import { useLinksStore } from '../store/links-store'
@@ -79,10 +79,6 @@ export default function CommandPalette({ onClose, onAddLink }: CommandPalettePro
 
   const results = useMemo(() => filterPaletteItems(entries, query, 10), [entries, query])
 
-  useEffect(() => {
-    setActive(0)
-  }, [query])
-
   const runActive = () => {
     const entry = results[active]
     if (!entry) return
@@ -102,7 +98,10 @@ export default function CommandPalette({ onClose, onAddLink }: CommandPalettePro
         <input
           autoFocus
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setQuery(event.target.value)
+            setActive(0)
+          }}
           onKeyDown={(event) => {
             if (event.key === 'ArrowDown') {
               event.preventDefault()
