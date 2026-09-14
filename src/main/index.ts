@@ -7,6 +7,7 @@ import {
 } from './auth/auth-service'
 import { PROTOCOL, findDeepLink } from './auth/deep-link'
 import { registerIpcHandlers } from './ipc'
+import { applyStoredMonitoringPreference } from './services/clipboard-controller'
 import { applyThemeMode, getThemeMode } from './services/theme-service'
 import { createMainWindow } from './windows/main-window'
 
@@ -57,6 +58,8 @@ if (!hasSingleInstanceLock) {
     subscribeToAuthChanges()
 
     mainWindow = createMainWindow()
+
+    applyStoredMonitoringPreference()
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {

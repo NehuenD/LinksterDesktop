@@ -3,6 +3,8 @@ import AddLinkDialog from '../components/AddLinkDialog'
 import EmptyState from '../components/EmptyState'
 import LinkCard from '../components/LinkCard'
 import Sidebar from '../components/Sidebar'
+import { api } from '../lib/api'
+import { useClipboardStore } from '../store/clipboard-store'
 import { useLinksStore } from '../store/links-store'
 
 export default function HomeScreen() {
@@ -12,12 +14,22 @@ export default function HomeScreen() {
   const error = useLinksStore((state) => state.error)
   const search = useLinksStore((state) => state.search)
   const setSearch = useLinksStore((state) => state.setSearch)
+  const monitoring = useClipboardStore((state) => state.monitoring)
+  const loadClipboard = useClipboardStore((state) => state.load)
+  const setMonitoring = useClipboardStore((state) => state.setMonitoring)
   const [text, setText] = useState(search)
   const [adding, setAdding] = useState(false)
 
   useEffect(() => {
     void load()
-  }, [load])
+    void loadClipboard()
+  }, [load, loadClipboard])
+
+  useEffect(() => {
+    return api.links.onChanged(() => {
+      void useLinksStore.getState().load()
+    })
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -38,6 +50,7 @@ export default function HomeScreen() {
             placeholder="Search links…"
             className="w-full max-w-md rounded-lg border border-subtle bg-raised px-3 py-2 text-sm outline-none placeholder:text-muted focus:border-accent"
           />
+
           <button
             type="button"
             onClick={() => void load()}
@@ -45,10 +58,23 @@ export default function HomeScreen() {
           >
             Refresh
           </button>
+
+          <button
+            type="button"
+            onClick={() => void setMonitoring(!monitoring)}
+            className="ml-auto flex items-center gap-2 rounded-lg border border-subtle px-3 py-2 text-sm transition hover:bg-hover"
+            title="Automatically save URLs copied to the clipboard"
+          >
+            <span
+              className={`h-2 w-2 rounded-full ${monitoring ? 'bg-emerald-500' : 'bg-muted'}`}
+            />
+            Auto-capture {monitoring ? 'on' : 'off'}
+          </button>
+
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="ml-auto rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
           >
             Add link
           </button>

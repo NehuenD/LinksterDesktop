@@ -3,6 +3,7 @@ import {
   IPC,
   type AppInfo,
   type AuthStateSnapshot,
+  type ClipboardStatus,
   type IpcResult,
   type Link,
   type LinkStats,
@@ -46,11 +47,22 @@ const api: LinksterApi = {
     create: (input) => invoke<Link>(IPC.links.create, input),
     update: (id, patch) => invoke<Link>(IPC.links.update, id, patch),
     delete: (id) => invoke<true>(IPC.links.delete, id),
-    refreshMetadata: (id) => invoke<Link>(IPC.links.refreshMetadata, id)
+    refreshMetadata: (id) => invoke<Link>(IPC.links.refreshMetadata, id),
+    onChanged: (listener) => {
+      const handler = (): void => listener()
+      ipcRenderer.on(IPC.links.changed, handler)
+      return () => {
+        ipcRenderer.removeListener(IPC.links.changed, handler)
+      }
+    }
   },
   labels: {
     list: () => invoke<string[]>(IPC.labels.list),
     create: (name) => invoke<string[]>(IPC.labels.create, name)
+  },
+  clipboard: {
+    getStatus: () => invoke<ClipboardStatus>(IPC.clipboard.getStatus),
+    setMonitoring: (monitoring) => invoke<boolean>(IPC.clipboard.setMonitoring, monitoring)
   }
 }
 

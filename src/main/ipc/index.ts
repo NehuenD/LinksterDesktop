@@ -1,4 +1,5 @@
 import { registerAuthHandlers } from './handlers/auth'
+import { registerClipboardHandlers } from './handlers/clipboard'
 import { registerLabelHandlers } from './handlers/labels'
 import { registerLinkHandlers } from './handlers/links'
 import { registerSystemHandlers } from './handlers/system'
@@ -8,4 +9,5 @@ export function registerIpcHandlers(): void {
   registerAuthHandlers()
   registerLinkHandlers()
   registerLabelHandlers()
+  registerClipboardHandlers()
 }

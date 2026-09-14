@@ -62,6 +62,11 @@ export const IPC = {
   labels: {
     list: 'labels:list',
     create: 'labels:create'
+  },
+  clipboard: {
+    getStatus: 'clipboard:get-status',
+    setMonitoring: 'clipboard:set-monitoring',
+    captured: 'clipboard:captured'
   }
 } as const
 
@@ -155,6 +160,11 @@ export interface LabelSummary {
   count: number
 }
 
+export interface ClipboardStatus {
+  monitoring: boolean
+  intervalMs: number
+}
+
 export interface LinksterApi {
   system: {
     ping(): Promise<IpcResult<PingResponse>>
@@ -179,9 +189,14 @@ export interface LinksterApi {
     update(id: string, patch: UpdateLinkPatch): Promise<IpcResult<Link>>
     delete(id: string): Promise<IpcResult<true>>
     refreshMetadata(id: string): Promise<IpcResult<Link>>
+    onChanged(listener: () => void): () => void
   }
   labels: {
     list(): Promise<IpcResult<string[]>>
     create(name: string): Promise<IpcResult<string[]>>
+  }
+  clipboard: {
+    getStatus(): Promise<IpcResult<ClipboardStatus>>
+    setMonitoring(monitoring: boolean): Promise<IpcResult<boolean>>
   }
 }
