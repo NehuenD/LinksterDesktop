@@ -80,6 +80,15 @@ export const IPC = {
   data: {
     export: 'data:export',
     copyAll: 'data:copy-all'
+  },
+  screenshots: {
+    list: 'screenshots:list',
+    getFolder: 'screenshots:get-folder',
+    chooseFolder: 'screenshots:choose-folder',
+    reveal: 'screenshots:reveal',
+    copyPath: 'screenshots:copy-path',
+    delete: 'screenshots:delete',
+    changed: 'screenshots:changed'
   }
 } as const
 
@@ -205,6 +214,19 @@ export interface ExportResult {
   count: number
 }
 
+export interface Screenshot {
+  id: string
+  filePath: string
+  fileName: string
+  capturedAt: string
+  thumbnailUrl: string | null
+}
+
+export interface ScreenshotFolderInfo {
+  folder: string | null
+  detected: string | null
+}
+
 export interface LinksterApi {
   system: {
     ping(): Promise<IpcResult<PingResponse>>
@@ -253,5 +275,14 @@ export interface LinksterApi {
   data: {
     export(format: ExportFormat): Promise<IpcResult<ExportResult>>
     copyAll(): Promise<IpcResult<number>>
+  }
+  screenshots: {
+    list(): Promise<IpcResult<Screenshot[]>>
+    getFolder(): Promise<IpcResult<ScreenshotFolderInfo>>
+    chooseFolder(): Promise<IpcResult<ScreenshotFolderInfo>>
+    reveal(filePath: string): Promise<IpcResult<true>>
+    copyPath(filePath: string): Promise<IpcResult<true>>
+    delete(filePath: string): Promise<IpcResult<true>>
+    onChanged(listener: () => void): () => void
   }
 }

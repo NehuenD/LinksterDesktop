@@ -71,6 +71,13 @@ export default function Sidebar() {
               }}
             />
           ))}
+          <button
+            type="button"
+            onClick={() => setView('screenshots')}
+            className="mt-1 flex w-full items-center rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-hover hover:text-primary"
+          >
+            Screenshots
+          </button>
         </nav>
 
         <div className="mt-6 min-h-0 flex-1 overflow-y-auto px-3">

@@ -8,6 +8,7 @@ import {
 import { PROTOCOL, findDeepLink } from './auth/deep-link'
 import { registerIpcHandlers } from './ipc'
 import { applyStoredMonitoringPreference } from './services/clipboard-controller'
+import { startScreenshotWatcher } from './services/screenshot-service'
 import { applyThemeMode, getThemeMode } from './services/theme-service'
 import { createMainWindow } from './windows/main-window'
 
@@ -60,6 +61,7 @@ if (!hasSingleInstanceLock) {
     mainWindow = createMainWindow()
 
     applyStoredMonitoringPreference()
+    startScreenshotWatcher()
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {

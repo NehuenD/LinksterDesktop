@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type AppView = 'library' | 'settings'
+export type AppView = 'library' | 'screenshots' | 'settings'
 
 interface UiStore {
   view: AppView

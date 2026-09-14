@@ -11,6 +11,8 @@ import {
   type LinksterApi,
   type NotificationPreferences,
   type PingResponse,
+  type Screenshot,
+  type ScreenshotFolderInfo,
   type ThemeMode
 } from '@shared/contract/ipc'
 
@@ -79,6 +81,21 @@ const api: LinksterApi = {
   data: {
     export: (format) => invoke<ExportResult>(IPC.data.export, format),
     copyAll: () => invoke<number>(IPC.data.copyAll)
+  },
+  screenshots: {
+    list: () => invoke<Screenshot[]>(IPC.screenshots.list),
+    getFolder: () => invoke<ScreenshotFolderInfo>(IPC.screenshots.getFolder),
+    chooseFolder: () => invoke<ScreenshotFolderInfo>(IPC.screenshots.chooseFolder),
+    reveal: (filePath) => invoke<true>(IPC.screenshots.reveal, filePath),
+    copyPath: (filePath) => invoke<true>(IPC.screenshots.copyPath, filePath),
+    delete: (filePath) => invoke<true>(IPC.screenshots.delete, filePath),
+    onChanged: (listener) => {
+      const handler = (): void => listener()
+      ipcRenderer.on(IPC.screenshots.changed, handler)
+      return () => {
+        ipcRenderer.removeListener(IPC.screenshots.changed, handler)
+      }
+    }
   }
 }
 

@@ -12,6 +12,7 @@ import { useGlobalShortcuts } from '../lib/use-global-shortcuts'
 import { useClipboardStore } from '../store/clipboard-store'
 import { useLinksStore } from '../store/links-store'
 import { useUiStore } from '../store/ui-store'
+import ScreenshotsScreen from './ScreenshotsScreen'
 import SettingsScreen from './SettingsScreen'
 
 export default function HomeScreen() {
@@ -59,6 +60,10 @@ export default function HomeScreen() {
 
   if (view === 'settings') {
     return <SettingsScreen />
+  }
+
+  if (view === 'screenshots') {
+    return <ScreenshotsScreen />
   }
 
   return (

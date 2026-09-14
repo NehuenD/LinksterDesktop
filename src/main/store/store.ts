@@ -7,6 +7,7 @@ export interface AppStoreSchema {
   clipboardMonitoring: boolean
   notifyOnLinkCapture: boolean
   notifyOnScreenshot: boolean
+  screenshotFolder?: string
   authSession?: StoredSecrets
 }
 
