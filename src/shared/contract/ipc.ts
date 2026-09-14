@@ -53,10 +53,15 @@ export const IPC = {
   links: {
     list: 'links:list',
     stats: 'links:stats',
+    create: 'links:create',
+    update: 'links:update',
+    delete: 'links:delete',
+    refreshMetadata: 'links:refresh-metadata',
     changed: 'links:changed'
   },
   labels: {
-    list: 'labels:list'
+    list: 'labels:list',
+    create: 'labels:create'
   }
 } as const
 
@@ -118,6 +123,26 @@ export const LinkQuerySchema = z.object({
 })
 export type LinkQuery = z.infer<typeof LinkQuerySchema>
 
+export const CreateLinkInputSchema = z.object({
+  url: z.string(),
+  title: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  thumbnailUrl: z.string().nullable().optional(),
+  label: z.string().nullable().optional()
+})
+export type CreateLinkInput = z.infer<typeof CreateLinkInputSchema>
+
+export const UpdateLinkPatchSchema = z.object({
+  url: z.string().optional(),
+  title: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  thumbnailUrl: z.string().nullable().optional(),
+  label: z.string().nullable().optional(),
+  isRead: z.boolean().optional(),
+  isArchived: z.boolean().optional()
+})
+export type UpdateLinkPatch = z.infer<typeof UpdateLinkPatchSchema>
+
 export interface LinkStats {
   total: number
   unread: number
@@ -150,8 +175,13 @@ export interface LinksterApi {
   links: {
     list(query: LinkQuery): Promise<IpcResult<Link[]>>
     stats(): Promise<IpcResult<LinkStats>>
+    create(input: CreateLinkInput): Promise<IpcResult<Link>>
+    update(id: string, patch: UpdateLinkPatch): Promise<IpcResult<Link>>
+    delete(id: string): Promise<IpcResult<true>>
+    refreshMetadata(id: string): Promise<IpcResult<Link>>
   }
   labels: {
     list(): Promise<IpcResult<string[]>>
+    create(name: string): Promise<IpcResult<string[]>>
   }
 }

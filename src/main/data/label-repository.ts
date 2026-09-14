@@ -19,3 +19,17 @@ export async function listLabels(): Promise<string[]> {
 
   return [...new Set(names)]
 }
+
+export async function createLabel(rawName: string): Promise<string[]> {
+  const name = rawName.trim()
+  if (name.length === 0) {
+    throw new Error('Label name cannot be empty.')
+  }
+
+  const { error } = await supabase.from('labels').insert({ name })
+  if (error && error.code !== '23505') {
+    throw new Error(error.message)
+  }
+
+  return listLabels()
+}

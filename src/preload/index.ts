@@ -42,10 +42,15 @@ const api: LinksterApi = {
   },
   links: {
     list: (query) => invoke<Link[]>(IPC.links.list, query),
-    stats: () => invoke<LinkStats>(IPC.links.stats)
+    stats: () => invoke<LinkStats>(IPC.links.stats),
+    create: (input) => invoke<Link>(IPC.links.create, input),
+    update: (id, patch) => invoke<Link>(IPC.links.update, id, patch),
+    delete: (id) => invoke<true>(IPC.links.delete, id),
+    refreshMetadata: (id) => invoke<Link>(IPC.links.refreshMetadata, id)
   },
   labels: {
-    list: () => invoke<string[]>(IPC.labels.list)
+    list: () => invoke<string[]>(IPC.labels.list),
+    create: (name) => invoke<string[]>(IPC.labels.create, name)
   }
 }
 

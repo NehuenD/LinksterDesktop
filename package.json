@@ -24,6 +24,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
     "electron-store": "^11.0.2",
+    "node-html-parser": "^9.0.4",
     "zod": "^4.6.5",
     "zustand": "^5.0.15"
   },

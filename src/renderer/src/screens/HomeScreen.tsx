@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import AddLinkDialog from '../components/AddLinkDialog'
 import EmptyState from '../components/EmptyState'
 import LinkCard from '../components/LinkCard'
 import Sidebar from '../components/Sidebar'
@@ -12,6 +13,7 @@ export default function HomeScreen() {
   const search = useLinksStore((state) => state.search)
   const setSearch = useLinksStore((state) => state.setSearch)
   const [text, setText] = useState(search)
+  const [adding, setAdding] = useState(false)
 
   useEffect(() => {
     void load()
@@ -43,6 +45,13 @@ export default function HomeScreen() {
           >
             Refresh
           </button>
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="ml-auto rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
+          >
+            Add link
+          </button>
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
@@ -71,6 +80,8 @@ export default function HomeScreen() {
           )}
         </div>
       </main>
+
+      {adding ? <AddLinkDialog onClose={() => setAdding(false)} /> : null}
     </div>
   )
 }

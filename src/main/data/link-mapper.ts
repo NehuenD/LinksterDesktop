@@ -44,6 +44,28 @@ export function mapLinkRow(row: LinkRow): Link {
   }
 }
 
+export interface LinkPatchLike {
+  url?: string
+  title?: string | null
+  description?: string | null
+  thumbnailUrl?: string | null
+  label?: string | null
+  isRead?: boolean
+  isArchived?: boolean
+}
+
+export function buildLinkUpdatePayload(patch: LinkPatchLike): Record<string, unknown> {
+  const payload: Record<string, unknown> = {}
+  if (patch.url !== undefined) payload.url = patch.url
+  if (patch.title !== undefined) payload.title = patch.title
+  if (patch.description !== undefined) payload.description = patch.description
+  if (patch.thumbnailUrl !== undefined) payload.thumbnail_url = patch.thumbnailUrl
+  if (patch.label !== undefined) payload.label = normalizeLabel(patch.label)
+  if (patch.isRead !== undefined) payload.is_read = patch.isRead
+  if (patch.isArchived !== undefined) payload.is_archived = patch.isArchived
+  return payload
+}
+
 export function computeStats(
   links: readonly Pick<Link, 'label' | 'isRead' | 'isArchived'>[]
 ): LinkStats {
