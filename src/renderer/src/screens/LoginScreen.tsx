@@ -7,7 +7,7 @@ export default function LoginScreen() {
   const isLoading = status === 'loading'
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface p-8 text-primary">
+    <div className="flex h-full items-center justify-center bg-surface p-8 text-primary">
       <main className="w-full max-w-md rounded-3xl border border-subtle bg-raised p-10 text-center backdrop-blur-2xl">
         <h1 className="font-display text-4xl font-semibold tracking-tight">Linkster</h1>
         <p className="mt-3 text-sm text-muted">

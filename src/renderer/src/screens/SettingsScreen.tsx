@@ -78,7 +78,7 @@ export default function SettingsScreen() {
     'rounded-lg border border-subtle px-4 py-2 text-sm text-primary transition hover:bg-hover'
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-surface text-primary">
+    <div className="flex h-full flex-col overflow-hidden bg-surface text-primary">
       <header className="flex items-center gap-4 border-b border-subtle px-6 py-4">
         <button
           type="button"

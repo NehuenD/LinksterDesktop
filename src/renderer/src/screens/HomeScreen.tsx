@@ -67,7 +67,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface text-primary">
+    <div className="flex h-full overflow-hidden bg-surface text-primary">
       <Sidebar />
 
       <main className="flex min-w-0 flex-1 flex-col">

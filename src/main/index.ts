@@ -10,6 +10,7 @@ import { registerIpcHandlers } from './ipc'
 import { applyStoredMonitoringPreference } from './services/clipboard-controller'
 import { startScreenshotWatcher } from './services/screenshot-service'
 import { applyThemeMode, getThemeMode } from './services/theme-service'
+import { createTray, hasTray } from './services/tray-service'
 import { createMainWindow } from './windows/main-window'
 
 const userDataDir = process.env['LINKSTER_USER_DATA_DIR']
@@ -18,12 +19,31 @@ if (userDataDir) {
 }
 
 let mainWindow: BrowserWindow | null = null
+let isQuitting = false
 
-function focusMainWindow(): void {
+function showMainWindow(): void {
   if (!mainWindow) return
   if (mainWindow.isMinimized()) mainWindow.restore()
   mainWindow.show()
   mainWindow.focus()
+}
+
+function attachWindowBehavior(window: BrowserWindow): void {
+  window.on('close', (event) => {
+    if (isQuitting || userDataDir) return
+    event.preventDefault()
+    window.hide()
+  })
+
+  if (hasTray() && process.platform !== 'darwin') {
+    window.setSkipTaskbar(true)
+  }
+}
+
+function createWindow(): BrowserWindow {
+  const window = createMainWindow()
+  attachWindowBehavior(window)
+  return window
 }
 
 function registerProtocolClient(): void {
@@ -42,7 +62,7 @@ if (!hasSingleInstanceLock) {
   registerProtocolClient()
 
   app.on('second-instance', (_event, argv) => {
-    focusMainWindow()
+    showMainWindow()
     const deepLink = findDeepLink(argv)
     if (deepLink) void completeSignInFromDeepLink(deepLink)
   })
@@ -52,20 +72,34 @@ if (!hasSingleInstanceLock) {
     void completeSignInFromDeepLink(url)
   })
 
+  app.on('before-quit', () => {
+    isQuitting = true
+  })
+
   app.whenReady().then(async () => {
     app.setName('Linkster')
     applyThemeMode(getThemeMode())
     registerIpcHandlers()
     subscribeToAuthChanges()
 
-    mainWindow = createMainWindow()
+    createTray({
+      show: showMainWindow,
+      quit: () => {
+        isQuitting = true
+        app.quit()
+      }
+    })
+
+    mainWindow = createWindow()
 
     applyStoredMonitoringPreference()
     startScreenshotWatcher()
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
-        mainWindow = createMainWindow()
+        mainWindow = createWindow()
+      } else {
+        showMainWindow()
       }
     })
 
