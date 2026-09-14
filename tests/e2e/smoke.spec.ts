@@ -7,8 +7,11 @@ const appRoot = resolve(import.meta.dirname, '../..')
 
 test('boots to the login gate in a single window', async () => {
   const userDataDir = mkdtempSync(join(tmpdir(), 'linkster-e2e-'))
+  const args = [appRoot]
+  if (process.platform === 'linux') args.push('--no-sandbox')
+
   const app = await electron.launch({
-    args: [appRoot],
+    args,
     env: { ...process.env, LINKSTER_USER_DATA_DIR: userDataDir }
   })
 

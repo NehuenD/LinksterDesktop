@@ -11,6 +11,7 @@ import { applyStoredMonitoringPreference } from './services/clipboard-controller
 import { startScreenshotWatcher } from './services/screenshot-service'
 import { applyThemeMode, getThemeMode } from './services/theme-service'
 import { createTray, hasTray } from './services/tray-service'
+import { initializeAutoUpdate } from './services/update-service'
 import { createMainWindow } from './windows/main-window'
 
 const userDataDir = process.env['LINKSTER_USER_DATA_DIR']
@@ -94,6 +95,7 @@ if (!hasSingleInstanceLock) {
 
     applyStoredMonitoringPreference()
     startScreenshotWatcher()
+    void initializeAutoUpdate()
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
