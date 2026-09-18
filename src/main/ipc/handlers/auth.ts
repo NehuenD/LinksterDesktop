@@ -1,16 +1,16 @@
-import { ipcMain } from 'electron'
 import { IPC, fail, ok } from '@shared/contract/ipc'
 import { getAuthState } from '../../auth/auth-state'
 import { signInWithGoogle, signOut } from '../../auth/auth-service'
+import { secureHandle } from '../guard'
 
 function toMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
 export function registerAuthHandlers(): void {
-  ipcMain.handle(IPC.auth.getState, () => ok(getAuthState()))
+  secureHandle(IPC.auth.getState, () => ok(getAuthState()))
 
-  ipcMain.handle(IPC.auth.signInWithGoogle, async () => {
+  secureHandle(IPC.auth.signInWithGoogle, async () => {
     try {
       await signInWithGoogle()
       return ok(true as const)
@@ -19,7 +19,7 @@ export function registerAuthHandlers(): void {
     }
   })
 
-  ipcMain.handle(IPC.auth.signOut, async () => {
+  secureHandle(IPC.auth.signOut, async () => {
     try {
       await signOut()
       return ok(true as const)

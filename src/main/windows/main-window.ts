@@ -1,8 +1,13 @@
 import { join } from 'node:path'
-import { BrowserWindow, shell } from 'electron'
+import { pathToFileURL } from 'node:url'
+import { BrowserWindow } from 'electron'
+import { hardenWindow } from './window-security'
 
 export function createMainWindow(): BrowserWindow {
   const isMac = process.platform === 'darwin'
+  const filePath = join(import.meta.dirname, '../renderer/index.html')
+  const rendererUrl = process.env['ELECTRON_RENDERER_URL']
+  const appUrl = rendererUrl ?? pathToFileURL(filePath).toString()
 
   const window = new BrowserWindow({
     width: 1200,
@@ -16,8 +21,8 @@ export function createMainWindow(): BrowserWindow {
     titleBarStyle: isMac ? 'hiddenInset' : 'default',
     trafficLightPosition: isMac ? { x: 14, y: 18 } : undefined,
     webPreferences: {
-      preload: join(import.meta.dirname, '../preload/index.mjs'),
-      sandbox: false,
+      preload: join(import.meta.dirname, '../preload/index.cjs'),
+      sandbox: true,
       contextIsolation: true,
       nodeIntegration: false
     }
@@ -27,16 +32,12 @@ export function createMainWindow(): BrowserWindow {
     window.show()
   })
 
-  window.webContents.setWindowOpenHandler(({ url }) => {
-    void shell.openExternal(url)
-    return { action: 'deny' }
-  })
+  hardenWindow(window, appUrl)
 
-  const rendererUrl = process.env['ELECTRON_RENDERER_URL']
   if (rendererUrl) {
     void window.loadURL(rendererUrl)
   } else {
-    void window.loadFile(join(import.meta.dirname, '../renderer/index.html'))
+    void window.loadFile(filePath)
   }
 
   return window

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Modal } from './ui'
-import { primaryButtonClass, secondaryButtonClass } from './ui-classes'
+import { dangerButtonClass, secondaryButtonClass } from './ui-classes'
 
 interface ConfirmDialogProps {
   title: string
@@ -30,8 +30,8 @@ export default function ConfirmDialog({
 
   return (
     <Modal title={title} onClose={onCancel}>
-      <p className="text-sm text-muted">{message}</p>
-      <div className="mt-6 flex justify-end gap-2">
+      <p className="text-xs leading-relaxed text-muted">{message}</p>
+      <div className="mt-4 flex justify-end gap-2">
         <button type="button" onClick={onCancel} className={secondaryButtonClass}>
           Cancel
         </button>
@@ -39,7 +39,7 @@ export default function ConfirmDialog({
           type="button"
           onClick={() => void handleConfirm()}
           disabled={busy}
-          className={primaryButtonClass}
+          className={dangerButtonClass}
         >
           {confirmLabel}
         </button>

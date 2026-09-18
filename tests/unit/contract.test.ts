@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   IPC,
+  LinkQuerySchema,
   ThemeModeSchema,
   createPingResponse,
   fail,
@@ -56,5 +57,19 @@ describe('ThemeModeSchema', () => {
 
   it('rejects unknown modes', () => {
     expect(() => ThemeModeSchema.parse('blue')).toThrow()
+  })
+})
+
+describe('LinkQuerySchema kind filter', () => {
+  it('accepts every isolated section kind', () => {
+    expect(LinkQuerySchema.parse({ kind: 'link' }).kind).toBe('link')
+    expect(LinkQuerySchema.parse({ kind: 'x-post' }).kind).toBe('x-post')
+    expect(LinkQuerySchema.parse({ kind: 'youtube' }).kind).toBe('youtube')
+    expect(LinkQuerySchema.parse({ kind: 'all' }).kind).toBe('all')
+    expect(LinkQuerySchema.parse({}).kind).toBeUndefined()
+  })
+
+  it('rejects unknown kinds', () => {
+    expect(() => LinkQuerySchema.parse({ kind: 'vimeo' })).toThrow()
   })
 })

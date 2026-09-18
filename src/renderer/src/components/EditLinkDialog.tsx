@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { DEFAULT_LABEL, type Link } from '@shared/contract/ipc'
 import { useLinksStore } from '../store/links-store'
+import LabelPicker from './LabelPicker'
 import { Field, Modal } from './ui'
 import { inputClass, primaryButtonClass, secondaryButtonClass } from './ui-classes'
 
@@ -13,36 +14,29 @@ export default function EditLinkDialog({ link, onClose }: { link: Link; onClose:
   const [title, setTitle] = useState(link.title ?? '')
   const [description, setDescription] = useState(link.description ?? '')
   const [label, setLabel] = useState(link.label)
-  const [error, setError] = useState<string | null>(null)
+  const [note, setNote] = useState(link.note ?? '')
   const [busy, setBusy] = useState(false)
 
   const save = async () => {
     setBusy(true)
-    setError(null)
     const result = await updateLink(link.id, {
       url,
       title: title.trim().length > 0 ? title.trim() : null,
       description: description.trim().length > 0 ? description.trim() : null,
-      label: label.trim().length > 0 ? label : DEFAULT_LABEL
+      label: label.trim().length > 0 ? label : DEFAULT_LABEL,
+      note: note.trim().length > 0 ? note.trim() : null
     })
     setBusy(false)
-    if (result.ok) {
-      onClose()
-    } else {
-      setError(result.error.message)
-    }
+    if (result.ok) onClose()
   }
 
   const refresh = async () => {
     setBusy(true)
-    setError(null)
     const result = await refreshMetadata(link.id)
     setBusy(false)
     if (result.ok) {
       setTitle(result.data.title ?? '')
       setDescription(result.data.description ?? '')
-    } else {
-      setError(result.error.message)
     }
   }
 
@@ -68,25 +62,18 @@ export default function EditLinkDialog({ link, onClose }: { link: Link; onClose:
           />
         </Field>
         <Field label="Label">
-          <input
-            list="edit-label-options"
-            value={label}
-            onChange={(event) => setLabel(event.target.value)}
-            placeholder={DEFAULT_LABEL}
+          <LabelPicker value={label} labels={labels} onChange={setLabel} />
+        </Field>
+        <Field label="Note">
+          <textarea
+            rows={2}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Why did you save this?"
+            maxLength={2000}
             className={inputClass}
           />
-          <datalist id="edit-label-options">
-            {labels.map((name) => (
-              <option key={name} value={name} />
-            ))}
-          </datalist>
         </Field>
-
-        {error ? (
-          <p role="alert" className="text-sm text-accent">
-            {error}
-          </p>
-        ) : null}
 
         <div className="flex items-center justify-between gap-2">
           <button

@@ -8,10 +8,23 @@ files:
   - out/**/*
   - package.json
   - native/clipboard-listener/build/Release/*.node
-  - resources/tray.png
 asar: true
 asarUnpack:
   - native/**
+extraResources:
+  - from: resources/tray.png
+    to: tray.png
+protocols:
+  - name: Linkster
+    schemes:
+      - linkster
+# Harden the packaged binary: no ELECTRON_RUN_AS_NODE / --inspect entry points
+# and only load code from the asar.
+electronFuses:
+  runAsNode: false
+  enableNodeCliInspectArguments: false
+  enableNodeOptionsEnvironmentVariable: false
+  onlyLoadAppFromAsar: true
 win:
   target:
     - nsis
@@ -25,6 +38,7 @@ nsis:
 mac:
   target:
     - dmg
+    - zip
   category: public.app-category.productivity
   identity: null
 linux:
@@ -32,5 +46,5 @@ linux:
     - AppImage
     - deb
   category: Utility
-  maintainer: Linkster
+  maintainer: NehuenD <NehuenD@users.noreply.github.com>
 publish: null

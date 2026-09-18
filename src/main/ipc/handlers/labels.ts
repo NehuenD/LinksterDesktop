@@ -1,5 +1,5 @@
-import { ipcMain } from 'electron'
-import { IPC, fail, ok } from '@shared/contract/ipc'
+import { secureHandle } from '../guard'
+import { IPC, LabelColorSchema, fail, ok } from '@shared/contract/ipc'
 import {
   createLabel,
   deleteLabel,
@@ -7,6 +7,7 @@ import {
   mergeLabels,
   renameLabel
 } from '../../data/label-repository'
+import { getLabelColors, setLabelColor } from '../../services/label-color-service'
 
 function toMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
@@ -18,7 +19,7 @@ function requireString(value: unknown): string | null {
 }
 
 export function registerLabelHandlers(): void {
-  ipcMain.handle(IPC.labels.list, async () => {
+  secureHandle(IPC.labels.list, async () => {
     try {
       return ok(await listLabels())
     } catch (error) {
@@ -26,7 +27,7 @@ export function registerLabelHandlers(): void {
     }
   })
 
-  ipcMain.handle(IPC.labels.create, async (_event, name: unknown) => {
+  secureHandle(IPC.labels.create, async (_event, name: unknown) => {
     try {
       const value = requireString(name)
       if (value === null) return fail('INVALID_NAME', 'A label name is required.')
@@ -36,7 +37,7 @@ export function registerLabelHandlers(): void {
     }
   })
 
-  ipcMain.handle(IPC.labels.rename, async (_event, oldName: unknown, newName: unknown) => {
+  secureHandle(IPC.labels.rename, async (_event, oldName: unknown, newName: unknown) => {
     try {
       const from = requireString(oldName)
       const to = requireString(newName)
@@ -49,7 +50,7 @@ export function registerLabelHandlers(): void {
     }
   })
 
-  ipcMain.handle(IPC.labels.merge, async (_event, source: unknown, target: unknown) => {
+  secureHandle(IPC.labels.merge, async (_event, source: unknown, target: unknown) => {
     try {
       const from = requireString(source)
       const to = requireString(target)
@@ -62,13 +63,40 @@ export function registerLabelHandlers(): void {
     }
   })
 
-  ipcMain.handle(IPC.labels.delete, async (_event, name: unknown) => {
+  secureHandle(IPC.labels.delete, async (_event, name: unknown) => {
     try {
       const value = requireString(name)
       if (value === null) return fail('INVALID_NAME', 'A label name is required.')
       return ok(await deleteLabel(value))
     } catch (error) {
       return fail('LABELS_DELETE_FAILED', toMessage(error))
+    }
+  })
+
+  secureHandle(IPC.labels.getColors, async () => {
+    try {
+      return ok(await getLabelColors())
+    } catch (error) {
+      return fail('LABELS_COLORS_FAILED', toMessage(error))
+    }
+  })
+
+  secureHandle(IPC.labels.setColor, async (_event, name: unknown, color: unknown) => {
+    try {
+      const value = requireString(name)
+      if (value === null) return fail('INVALID_NAME', 'A label name is required.')
+
+      let resolvedColor: string | null = null
+      if (color !== null) {
+        const parsed = LabelColorSchema.safeParse(color)
+        if (!parsed.success) {
+          return fail('INVALID_COLOR', 'A label color must be a 6-digit hex value.')
+        }
+        resolvedColor = parsed.data
+      }
+      return ok(await setLabelColor(value, resolvedColor))
+    } catch (error) {
+      return fail('LABELS_SET_COLOR_FAILED', toMessage(error))
     }
   })
 }

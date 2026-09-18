@@ -5,6 +5,11 @@
  *
  * All supabase-js keys (session, PKCE code verifier, ...) are held in a single
  * record so they can coexist and survive an app restart mid-flow.
+ *
+ * Fail-closed: when OS encryption is unavailable the current session is kept
+ * only in memory and nothing is written to disk in plaintext. The user stays
+ * signed in for the run but must re-authenticate after a restart — preferable
+ * to silently storing refresh tokens in the clear (e.g. Linux without a keyring).
  */
 
 export interface KeyValueBacking {
@@ -30,19 +35,25 @@ export type StoredSecrets = Record<string, string>
 
 const PLAIN_PREFIX = 'plain:'
 
+let warnedAboutMissingEncryption = false
+
+function warnMissingEncryption(): void {
+  if (warnedAboutMissingEncryption) return
+  warnedAboutMissingEncryption = true
+  console.warn(
+    '[session] OS secure storage is unavailable; the session will not be ' +
+      'persisted to disk. Install a system keyring (e.g. gnome-keyring/libsecret ' +
+      'on Linux) to stay signed in across restarts.'
+  )
+}
+
 function readRecord(backing: KeyValueBacking, storageKey: string): StoredSecrets {
   const value = backing.get(storageKey)
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return {}
   return { ...(value as StoredSecrets) }
 }
 
-function encodeSecret(codec: SecretCodec, value: string): string {
-  if (!codec.isEncryptionAvailable()) {
-    return PLAIN_PREFIX + Buffer.from(value, 'utf8').toString('base64')
-  }
-  return codec.encryptString(value)
-}
-
+/** Reads legacy `plain:` payloads written before persistence was fail-closed. */
 function decodeSecret(codec: SecretCodec, payload: string): string {
   if (payload.startsWith(PLAIN_PREFIX)) {
     return Buffer.from(payload.slice(PLAIN_PREFIX.length), 'base64').toString('utf8')
@@ -55,8 +66,12 @@ export function createSessionStorage(
   codec: SecretCodec,
   storageKey = 'authSession'
 ): SessionStorage {
+  const memory = new Map<string, string>()
+
   return {
     getItem(key) {
+      const cached = memory.get(key)
+      if (cached !== undefined) return cached
       const encoded = readRecord(backing, storageKey)[key]
       if (typeof encoded !== 'string') return null
       try {
@@ -67,12 +82,22 @@ export function createSessionStorage(
     },
 
     setItem(key, value) {
+      if (!codec.isEncryptionAvailable()) {
+        // Keep the session usable for this run, but never write it in the clear.
+        memory.set(key, value)
+        warnMissingEncryption()
+        return
+      }
+      // Once encryption is available the durable record wins: a value cached
+      // while encryption was unavailable must never shadow a fresher token.
+      memory.delete(key)
       const record = readRecord(backing, storageKey)
-      record[key] = encodeSecret(codec, value)
+      record[key] = codec.encryptString(value)
       backing.set(storageKey, record)
     },
 
     removeItem(key) {
+      memory.delete(key)
       const record = readRecord(backing, storageKey)
       if (key in record) {
         delete record[key]

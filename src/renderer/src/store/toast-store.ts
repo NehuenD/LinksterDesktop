@@ -33,3 +33,7 @@ export function reportError(message: string): void {
 export function reportSuccess(message: string): void {
   useToastStore.getState().push(message, 'success')
 }
+
+export function reportInfo(message: string): void {
+  useToastStore.getState().push(message, 'info')
+}

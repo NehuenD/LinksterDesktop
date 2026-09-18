@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { secureHandle } from '../guard'
 import { IPC, fail, ok } from '@shared/contract/ipc'
 import {
   isMonitoring,
@@ -8,7 +8,7 @@ import {
 } from '../../services/clipboard-controller'
 
 export function registerClipboardHandlers(): void {
-  ipcMain.handle(IPC.clipboard.getStatus, () =>
+  secureHandle(IPC.clipboard.getStatus, () =>
     ok({
       monitoring: isMonitoring(),
       intervalMs: pollingIntervalMs(),
@@ -16,7 +16,7 @@ export function registerClipboardHandlers(): void {
     })
   )
 
-  ipcMain.handle(IPC.clipboard.setMonitoring, (_event, value: unknown) => {
+  secureHandle(IPC.clipboard.setMonitoring, (_event, value: unknown) => {
     if (typeof value !== 'boolean') {
       return fail('INVALID_ARGUMENT', 'Monitoring must be a boolean.')
     }

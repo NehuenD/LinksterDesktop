@@ -45,8 +45,9 @@ export function startMonitoring(): void {
   if (watcher) return
 
   pipeline = new ClipboardCapturePipeline({
-    onCapture: (url) => {
-      void captureUrl(url).catch(() => undefined)
+    onCapture: async (url) => {
+      const result = await captureUrl(url)
+      return { accepted: result.captured, retryable: result.retryable ?? false }
     }
   })
 

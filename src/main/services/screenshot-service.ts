@@ -5,10 +5,12 @@ import { homedir } from 'node:os'
 import { basename, join, resolve, sep } from 'node:path'
 import { BrowserWindow, Notification, clipboard, nativeImage, shell } from 'electron'
 import { IPC, type Screenshot } from '@shared/contract/ipc'
+import { mapLimit } from '@shared/lib/concurrency'
 import { store } from '../store/store'
 import { isScreenshotName, sortNewestFirst } from './screenshot-rules'
 
 const THUMBNAIL_WIDTH = 256
+const THUMBNAIL_CONCURRENCY = 4
 const SETTLE_MS = 800
 
 export function detectScreenshotFolder(): string | null {
@@ -95,27 +97,31 @@ export async function listScreenshots(): Promise<Screenshot[]> {
     return []
   }
 
-  const screenshots: Screenshot[] = []
+  const names = entries.filter((name) => isScreenshotName(name, custom))
   const seen = new Set<string>()
 
-  for (const name of entries) {
-    if (!isScreenshotName(name, custom)) continue
+  // Bounded concurrency: stat + decode several files at once instead of one at
+  // a time, without ever decoding the whole folder simultaneously.
+  const results = await mapLimit(names, THUMBNAIL_CONCURRENCY, async (name) => {
     const filePath = join(folder, name)
     try {
       const stat = await fs.stat(filePath)
-      if (!stat.isFile()) continue
+      if (!stat.isFile()) return null
       seen.add(filePath)
-      screenshots.push({
+      return {
         id: createHash('sha1').update(filePath).digest('hex'),
         filePath,
         fileName: name,
         capturedAt: stat.mtime.toISOString(),
         thumbnailUrl: await thumbnailFor(filePath, stat.mtimeMs)
-      })
+      } satisfies Screenshot
     } catch {
       // Skip unreadable entries.
+      return null
     }
-  }
+  })
+
+  const screenshots = results.filter((item): item is Screenshot => item !== null)
 
   for (const cachedPath of thumbnailCache.keys()) {
     if (!seen.has(cachedPath)) thumbnailCache.delete(cachedPath)
@@ -135,18 +141,28 @@ function isWithinFolder(filePath: string): boolean {
   return target.startsWith(root)
 }
 
+/**
+ * Only files the screenshot list would surface may be acted on. Containment
+ * alone is not enough: the default folder can be the whole Desktop/Pictures
+ * directory, so delete/reveal must not accept arbitrary documents there.
+ */
+function isKnownScreenshotPath(filePath: string): boolean {
+  if (!isWithinFolder(filePath)) return false
+  return isScreenshotName(basename(filePath), isCustomFolder())
+}
+
 export async function revealScreenshot(filePath: string): Promise<void> {
-  if (!isWithinFolder(filePath)) throw new Error('Path is outside the screenshots folder.')
+  if (!isKnownScreenshotPath(filePath)) throw new Error('Not a screenshot in the watched folder.')
   shell.showItemInFolder(filePath)
 }
 
 export async function copyScreenshotPath(filePath: string): Promise<void> {
-  if (!isWithinFolder(filePath)) throw new Error('Path is outside the screenshots folder.')
+  if (!isKnownScreenshotPath(filePath)) throw new Error('Not a screenshot in the watched folder.')
   await clipboard.writeText(filePath)
 }
 
 export async function deleteScreenshot(filePath: string): Promise<void> {
-  if (!isWithinFolder(filePath)) throw new Error('Path is outside the screenshots folder.')
+  if (!isKnownScreenshotPath(filePath)) throw new Error('Not a screenshot in the watched folder.')
   await fs.unlink(filePath)
   knownFiles.delete(basename(filePath))
   broadcastChanged()

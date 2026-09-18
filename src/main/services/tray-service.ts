@@ -6,8 +6,14 @@ import { buildTrayMenuTemplate, type TrayMenuHandlers } from './tray-menu'
 let tray: Tray | null = null
 
 function iconPath(): string | null {
+  // Packaged builds copy the file to `resources/tray.png` via extraResources;
+  // the asar-relative path is a fallback so a misconfigured package still gets
+  // a tray instead of an invisible window with no way to quit.
   const candidates = app.isPackaged
-    ? [join(process.resourcesPath, 'tray.png')]
+    ? [
+        join(process.resourcesPath, 'tray.png'),
+        join(app.getAppPath(), 'resources', 'tray.png')
+      ]
     : [join(app.getAppPath(), 'resources', 'tray.png')]
   return candidates.find((candidate) => existsSync(candidate)) ?? null
 }

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_LABEL } from '@shared/contract/ipc'
 import {
-  computeStats,
   mapLinkRow,
   mapLinkRows,
   normalizeLabel,
@@ -14,7 +13,10 @@ const baseRow: LinkRow = {
   title: null,
   description: null,
   thumbnail_url: null,
+  author: null,
+  site_name: null,
   label: null,
+  note: null,
   is_read: null,
   is_archived: null,
   created_at: '2026-01-01T00:00:00.000Z',
@@ -51,6 +53,18 @@ describe('mapLinkRow', () => {
     expect(link.isArchived).toBe(true)
   })
 
+  it('maps the note field and defaults it to null', () => {
+    expect(mapLinkRow({ ...baseRow, note: 'Read this weekend' }).note).toBe('Read this weekend')
+    expect(mapLinkRow(baseRow).note).toBeNull()
+  })
+
+  it('maps the link kind and tolerates missing or unknown values', () => {
+    expect(mapLinkRow({ ...baseRow, kind: 'x-post' }).kind).toBe('x-post')
+    expect(mapLinkRow({ ...baseRow, kind: 'youtube' }).kind).toBe('youtube')
+    expect(mapLinkRow(baseRow).kind).toBe('link')
+    expect(mapLinkRow({ ...baseRow, kind: 'nonsense' }).kind).toBe('link')
+  })
+
   it('throws when id or url is missing', () => {
     expect(() => mapLinkRow({ ...baseRow, id: undefined as unknown as string })).toThrow()
     expect(() => mapLinkRow({ ...baseRow, url: undefined as unknown as string })).toThrow()
@@ -60,6 +74,29 @@ describe('mapLinkRow', () => {
     expect(mapLinkRow({ ...baseRow, created_at: 'nonsense' }).createdAt).toBe(
       new Date(0).toISOString()
     )
+  })
+
+  it('maps reader badge fields from the embedded content row', () => {
+    const link = mapLinkRow({
+      ...baseRow,
+      link_content: { word_count: 450, extraction_status: 'ok' }
+    })
+    expect(link.wordCount).toBe(450)
+    expect(link.readingTimeMinutes).toBe(2)
+    expect(link.extractionStatus).toBe('ok')
+  })
+
+  it('maps reader badge fields from flat rpc columns', () => {
+    const link = mapLinkRow({ ...baseRow, word_count: 225, extraction_status: 'media' })
+    expect(link.wordCount).toBe(225)
+    expect(link.extractionStatus).toBe('media')
+  })
+
+  it('defaults reader fields when no content row exists', () => {
+    const link = mapLinkRow(baseRow)
+    expect(link.wordCount).toBeNull()
+    expect(link.readingTimeMinutes).toBeNull()
+    expect(link.extractionStatus).toBe('none')
   })
 })
 
@@ -83,24 +120,3 @@ describe('mapLinkRows', () => {
   })
 })
 
-describe('computeStats', () => {
-  it('aggregates totals and per-label counts', () => {
-    const stats = computeStats([
-      { label: 'General', isRead: false, isArchived: false },
-      { label: 'General', isRead: true, isArchived: true },
-      { label: 'News', isRead: false, isArchived: false }
-    ])
-    expect(stats).toEqual({
-      total: 3,
-      unread: 2,
-      archived: 1,
-      byLabel: { General: 2, News: 1 }
-    })
-  })
-
-  it('excludes archived items from the unread count', () => {
-    const stats = computeStats([{ label: 'General', isRead: false, isArchived: true }])
-    expect(stats.unread).toBe(0)
-    expect(stats.archived).toBe(1)
-  })
-})

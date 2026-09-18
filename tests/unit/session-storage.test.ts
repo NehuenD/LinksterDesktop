@@ -72,12 +72,29 @@ describe('createSessionStorage', () => {
     expect(storage.getItem('sb-verifier')).toBe('verifier-value')
   })
 
-  it('falls back to plaintext when encryption is unavailable', () => {
+  it('keeps the session in memory but never persists plaintext when encryption is unavailable', () => {
     const { backing, map } = createBacking()
     const storage = createSessionStorage(backing, unavailableCodec)
     storage.setItem('sb-session', 'token-value')
+    // Usable for the current run...
     expect(storage.getItem('sb-session')).toBe('token-value')
-    expect(JSON.stringify(map.get('authSession'))).toContain('plain:')
+    // ...but nothing is written to disk in the clear.
+    expect(map.get('authSession')).toBeUndefined()
+  })
+
+  it('loses an unencrypted session across restarts instead of storing it in plaintext', () => {
+    const { backing } = createBacking()
+    createSessionStorage(backing, unavailableCodec).setItem('sb-session', 'token-value')
+    const restarted = createSessionStorage(backing, unavailableCodec)
+    expect(restarted.getItem('sb-session')).toBeNull()
+  })
+
+  it('still reads legacy plaintext payloads written before fail-closed storage', () => {
+    const { backing } = createBacking()
+    const legacy = `plain:${Buffer.from('old-token', 'utf8').toString('base64')}`
+    backing.set('authSession', { 'sb-session': legacy })
+    const storage = createSessionStorage(backing, unavailableCodec)
+    expect(storage.getItem('sb-session')).toBe('old-token')
   })
 
   it('returns null when the payload cannot be decoded', () => {

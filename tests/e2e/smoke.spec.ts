@@ -22,7 +22,19 @@ test('boots to the login gate in a single window', async () => {
     await expect(window).toHaveTitle('Linkster')
     await expect(window.getByRole('heading', { name: 'Linkster' })).toBeVisible()
     await expect(window.getByRole('button', { name: 'Continue with Google' })).toBeVisible()
-    expect(app.windows()).toHaveLength(1)
+
+    // The quick-capture overlay is pre-warmed hidden and the main window is shown
+    // on `ready-to-show`, which can trail DOM load on a busy machine, so poll
+    // instead of assuming the window is already visible.
+    await expect
+      .poll(
+        () =>
+          app.evaluate(({ BrowserWindow }) =>
+            BrowserWindow.getAllWindows().filter((candidate) => candidate.isVisible()).length
+          ),
+        { timeout: 10_000 }
+      )
+      .toBe(1)
   } finally {
     await app.close()
     rmSync(userDataDir, { recursive: true, force: true })

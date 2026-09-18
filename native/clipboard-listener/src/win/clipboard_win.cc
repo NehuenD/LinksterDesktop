@@ -4,6 +4,9 @@
 #include <windows.h>
 
 #include <atomic>
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
 #include <string>
 #include <thread>
 
@@ -12,9 +15,12 @@ namespace {
 
 std::atomic<bool> g_shouldStop{false};
 std::atomic<bool> g_ready{false};
+std::atomic<bool> g_startSuccess{false};
 std::thread g_thread;
 DWORD g_threadId = 0;
 HWND g_messageWindow = nullptr;
+std::mutex g_readyMutex;
+std::condition_variable g_readyCv;
 
 std::string ReadClipboardText() {
   std::string result;
@@ -65,11 +71,34 @@ void ThreadMain() {
                                     nullptr);
   if (g_messageWindow == nullptr) {
     UnregisterClassW(windowClass.lpszClassName, windowClass.hInstance);
+    {
+      std::lock_guard<std::mutex> lock(g_readyMutex);
+      g_ready.store(true);
+    }
+    g_readyCv.notify_all();
     return;
   }
 
-  AddClipboardFormatListener(g_messageWindow);
-  g_ready.store(true);
+  if (!AddClipboardFormatListener(g_messageWindow)) {
+    // Without the listener the loop would spin with no events: report failure
+    // so the JS layer falls back to polling instead of pretending to work.
+    DestroyWindow(g_messageWindow);
+    g_messageWindow = nullptr;
+    UnregisterClassW(windowClass.lpszClassName, windowClass.hInstance);
+    {
+      std::lock_guard<std::mutex> lock(g_readyMutex);
+      g_ready.store(true);
+    }
+    g_readyCv.notify_all();
+    return;
+  }
+
+  {
+    std::lock_guard<std::mutex> lock(g_readyMutex);
+    g_startSuccess.store(true);
+    g_ready.store(true);
+  }
+  g_readyCv.notify_all();
 
   MSG message;
   while (!g_shouldStop.load() && GetMessageW(&message, nullptr, 0, 0) > 0) {
@@ -87,14 +116,23 @@ void ThreadMain() {
 
 bool StartClipboardListener(Napi::ThreadSafeFunction tsfn) {
   (void)tsfn;
+
+  // Never assign over a joinable thread: that calls std::terminate.
+  if (g_thread.joinable()) {
+    g_shouldStop.store(true);
+    g_thread.join();
+  }
+
   g_shouldStop.store(false);
   g_ready.store(false);
+  g_startSuccess.store(false);
   g_thread = std::thread(ThreadMain);
 
-  for (int attempt = 0; attempt < 200 && !g_ready.load(); ++attempt) {
-    Sleep(10);
+  {
+    std::unique_lock<std::mutex> lock(g_readyMutex);
+    g_readyCv.wait_for(lock, std::chrono::seconds(2), [] { return g_ready.load(); });
   }
-  return g_ready.load();
+  return g_startSuccess.load();
 }
 
 void StopClipboardListener() {

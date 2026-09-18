@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { DEFAULT_LABEL } from '@shared/contract/ipc'
 import { useLinksStore } from '../store/links-store'
+import LabelPicker from './LabelPicker'
 import { Field, Modal } from './ui'
 import { inputClass, primaryButtonClass, secondaryButtonClass } from './ui-classes'
 
@@ -9,19 +10,18 @@ export default function AddLinkDialog({ onClose }: { onClose: () => void }) {
   const labels = useLinksStore((state) => state.labels)
   const [url, setUrl] = useState('')
   const [label, setLabel] = useState(DEFAULT_LABEL)
-  const [error, setError] = useState<string | null>(null)
+  const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
 
   const submit = async () => {
     setBusy(true)
-    setError(null)
-    const result = await createLink({ url, label: label.trim().length > 0 ? label : DEFAULT_LABEL })
+    const result = await createLink({
+      url,
+      label: label.trim().length > 0 ? label : DEFAULT_LABEL,
+      note: note.trim().length > 0 ? note.trim() : null
+    })
     setBusy(false)
-    if (result.ok) {
-      onClose()
-    } else {
-      setError(result.error.message)
-    }
+    if (result.ok) onClose()
   }
 
   return (
@@ -44,25 +44,19 @@ export default function AddLinkDialog({ onClose }: { onClose: () => void }) {
         </Field>
 
         <Field label="Label">
-          <input
-            list="add-label-options"
-            value={label}
-            onChange={(event) => setLabel(event.target.value)}
-            placeholder={DEFAULT_LABEL}
-            className={inputClass}
-          />
-          <datalist id="add-label-options">
-            {labels.map((name) => (
-              <option key={name} value={name} />
-            ))}
-          </datalist>
+          <LabelPicker value={label} labels={labels} onChange={setLabel} />
         </Field>
 
-        {error ? (
-          <p role="alert" className="text-sm text-accent">
-            {error}
-          </p>
-        ) : null}
+        <Field label="Note">
+          <textarea
+            rows={2}
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="Why did you save this?"
+            maxLength={2000}
+            className={inputClass}
+          />
+        </Field>
 
         <div className="flex justify-end gap-2">
           <button type="button" onClick={onClose} className={secondaryButtonClass}>

@@ -64,4 +64,28 @@ describe('ClipboardCapturePipeline', () => {
 
     expect(onCapture).not.toHaveBeenCalled()
   })
+
+  it('does not re-capture a URL once it is accepted into the outbox', async () => {
+    const onCapture = vi.fn().mockResolvedValue({ accepted: true, retryable: false })
+    const pipeline = new ClipboardCapturePipeline({ onCapture, debounceMs: 300 })
+
+    pipeline.handle('https://example.com')
+    await vi.advanceTimersByTimeAsync(300)
+    pipeline.handle('https://example.com')
+    await vi.advanceTimersByTimeAsync(300)
+
+    expect(onCapture).toHaveBeenCalledTimes(1)
+  })
+
+  it('allows retrying a URL after a retryable capture failure', async () => {
+    const onCapture = vi.fn().mockResolvedValue({ accepted: false, retryable: true })
+    const pipeline = new ClipboardCapturePipeline({ onCapture, debounceMs: 300 })
+
+    pipeline.handle('https://example.com')
+    await vi.advanceTimersByTimeAsync(300)
+    pipeline.handle('https://example.com')
+    await vi.advanceTimersByTimeAsync(300)
+
+    expect(onCapture).toHaveBeenCalledTimes(2)
+  })
 })

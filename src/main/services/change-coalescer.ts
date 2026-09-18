@@ -2,6 +2,8 @@ export interface ChangeCoalescer {
   schedule: () => void
   flush: () => void
   dispose: () => void
+  /** Re-enables scheduling after a dispose (realtime restart). */
+  resume: () => void
 }
 
 /**
@@ -9,27 +11,35 @@ export interface ChangeCoalescer {
  */
 export function createChangeCoalescer(onFlush: () => void, delayMs = 250): ChangeCoalescer {
   let timer: ReturnType<typeof setTimeout> | null = null
+  let disposed = false
+
+  const clear = (): void => {
+    if (timer) {
+      clearTimeout(timer)
+      timer = null
+    }
+  }
 
   return {
     schedule() {
-      if (timer) clearTimeout(timer)
+      if (disposed) return
+      clear()
       timer = setTimeout(() => {
         timer = null
         onFlush()
       }, delayMs)
     },
     flush() {
-      if (timer) {
-        clearTimeout(timer)
-        timer = null
-      }
+      if (disposed) return
+      clear()
       onFlush()
     },
     dispose() {
-      if (timer) {
-        clearTimeout(timer)
-        timer = null
-      }
+      disposed = true
+      clear()
+    },
+    resume() {
+      disposed = false
     }
   }
 }

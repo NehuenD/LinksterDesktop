@@ -5,7 +5,12 @@
   "type": "module",
   "main": "./out/main/index.js",
   "license": "MIT",
-  "author": "Linkster",
+  "author": "NehuenD <NehuenD@users.noreply.github.com>",
+  "homepage": "https://github.com/NehuenD/LinksterDesktop",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NehuenD/LinksterDesktop.git"
+  },
   "scripts": {
     "dev": "electron-vite dev",
     "native:build": "node-gyp rebuild -C native/clipboard-listener",
@@ -18,7 +23,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "electron-vite build && playwright test",
     "dist": "npm run native:build && npm run build && electron-builder",
     "dist:win": "npm run native:build && npm run build && electron-builder --win",
     "dist:mac": "npm run native:build && npm run build && electron-builder --mac",
@@ -50,6 +55,7 @@
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.12.0",
     "node-addon-api": "^8.9.2",
+    "node-gyp": "^12.4.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwindcss": "^4.3.3",

@@ -12,10 +12,42 @@ export function formatRelativeTime(iso: string, now: number = Date.now()): strin
   return `${Math.floor(seconds / 31_556_952)}y ago`
 }
 
+export const WORDS_PER_MINUTE = 225
+
+export function readingTimeMinutes(wordCount: number | null | undefined): number | null {
+  if (wordCount === null || wordCount === undefined || wordCount <= 0) return null
+  return Math.max(1, Math.round(wordCount / WORDS_PER_MINUTE))
+}
+
 export function domainOf(url: string): string {
   try {
     return new URL(url).hostname.replace(/^www\./, '')
   } catch {
     return url
   }
+}
+
+/** Absolute short date (e.g. "Mar 21, 2006"); empty for invalid input. */
+export function formatShortDate(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC'
+  })
+}
+
+/** Video duration as m:ss / h:mm:ss; null when unknown or non-positive. */
+export function formatDuration(
+  seconds: number | null | undefined
+): string | null {
+  if (seconds === null || seconds === undefined || seconds <= 0) return null
+  const total = Math.round(seconds)
+  const hours = Math.floor(total / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  const secs = total % 60
+  const pad = (value: number): string => String(value).padStart(2, '0')
+  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(secs)}` : `${minutes}:${pad(secs)}`
 }

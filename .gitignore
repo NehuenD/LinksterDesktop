@@ -12,3 +12,5 @@ playwright-report/
 *.tsbuildinfo
 native/**/build/
 native/**/node_modules/
+supabase/.temp/
+supabase/.branches/

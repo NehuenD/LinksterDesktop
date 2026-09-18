@@ -8,6 +8,12 @@ describe('findDeepLink', () => {
     )
   })
 
+  it('matches a scheme delivered with different casing (Windows)', () => {
+    expect(findDeepLink(['LINKSTER://auth/callback?code=abc'])).toBe(
+      'LINKSTER://auth/callback?code=abc'
+    )
+  })
+
   it('returns null when no deep link is present', () => {
     expect(findDeepLink(['--flag', 'value'])).toBeNull()
   })
@@ -17,7 +23,16 @@ describe('parseAuthCallback', () => {
   it('extracts the authorization code', () => {
     expect(parseAuthCallback('linkster://auth/callback?code=abc123')).toEqual({
       code: 'abc123',
-      error: null
+      error: null,
+      state: null
+    })
+  })
+
+  it('extracts the oauth state echo', () => {
+    expect(parseAuthCallback('linkster://auth/callback?code=abc123&state=xyz')).toEqual({
+      code: 'abc123',
+      error: null,
+      state: 'xyz'
     })
   })
 
@@ -32,16 +47,18 @@ describe('parseAuthCallback', () => {
   it('rejects foreign protocols and unrelated paths', () => {
     expect(parseAuthCallback('https://example.com/auth/callback?code=abc')).toEqual({
       code: null,
-      error: null
+      error: null,
+      state: null
     })
     expect(parseAuthCallback('linkster://other/path?code=abc')).toEqual({
       code: null,
-      error: null
+      error: null,
+      state: null
     })
   })
 
   it('handles null and malformed input', () => {
-    expect(parseAuthCallback(null)).toEqual({ code: null, error: null })
-    expect(parseAuthCallback('not a url')).toEqual({ code: null, error: null })
+    expect(parseAuthCallback(null)).toEqual({ code: null, error: null, state: null })
+    expect(parseAuthCallback('not a url')).toEqual({ code: null, error: null, state: null })
   })
 })

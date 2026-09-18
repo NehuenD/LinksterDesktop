@@ -35,6 +35,10 @@ jobs:
       - name: Build native clipboard addon
         run: npm run native:build
 
+      - name: Verify native clipboard addon
+        if: runner.os != 'Linux'
+        run: npm run native:verify
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -58,7 +62,11 @@ jobs:
   package:
     name: Package (${{ matrix.os }})
     if: startsWith(github.ref, 'refs/tags/v')
+    needs: verify
     runs-on: ${{ matrix.os }}
+    env:
+      MAIN_VITE_SUPABASE_URL: ${{ secrets.MAIN_VITE_SUPABASE_URL }}
+      MAIN_VITE_SUPABASE_ANON_KEY: ${{ secrets.MAIN_VITE_SUPABASE_ANON_KEY }}
     strategy:
       fail-fast: false
       matrix:
@@ -85,6 +93,14 @@ jobs:
 
       - name: Ensure Electron binary
         run: node node_modules/electron/install.js
+
+      - name: Validate build-time config
+        shell: bash
+        run: |
+          if [ -z "$MAIN_VITE_SUPABASE_URL" ] || [ -z "$MAIN_VITE_SUPABASE_ANON_KEY" ]; then
+            echo "::error::MAIN_VITE_SUPABASE_URL and MAIN_VITE_SUPABASE_ANON_KEY repository secrets are required: packaged installers inline these at build time."
+            exit 1
+          fi
 
       - name: Build installers
         run: npm run ${{ matrix.script }}

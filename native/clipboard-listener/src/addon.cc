@@ -32,6 +32,9 @@ static Napi::Value Start(const Napi::CallbackInfo& info) {
                                          "LinksterClipboard", 0, 1);
 
   if (!linkster::StartClipboardListener(g_tsfn)) {
+    // The failed start may have left a joinable worker thread behind; stop it
+    // so the next start() does not call std::terminate.
+    linkster::StopClipboardListener();
     g_tsfn.Release();
     Napi::Error::New(env, "failed to start clipboard listener")
         .ThrowAsJavaScriptException();

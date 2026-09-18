@@ -26,13 +26,33 @@ describe('buildLinkUpdatePayload', () => {
 
   it('never emits immutable columns', () => {
     const payload = buildLinkUpdatePayload({ url: 'https://example.com', isRead: false })
-    expect(Object.keys(payload).sort()).toEqual(['is_read', 'url'])
+    expect(Object.keys(payload).sort()).toEqual(['is_read', 'kind', 'url'])
     expect(payload).not.toHaveProperty('id')
     expect(payload).not.toHaveProperty('user_id')
     expect(payload).not.toHaveProperty('created_at')
   })
 
+  it('reclassifies kind and canonicalizes the URL on a URL edit', () => {
+    expect(buildLinkUpdatePayload({ url: 'https://youtu.be/dQw4w9WgXcQ?si=abc' })).toEqual({
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      kind: 'youtube'
+    })
+    expect(buildLinkUpdatePayload({ url: 'https://twitter.com/jack/status/20' })).toEqual({
+      url: 'https://x.com/i/status/20',
+      kind: 'x-post'
+    })
+    expect(buildLinkUpdatePayload({ url: 'https://example.com/a' })).toEqual({
+      url: 'https://example.com/a',
+      kind: 'link'
+    })
+  })
+
   it('coalesces a blank label to General', () => {
     expect(buildLinkUpdatePayload({ label: '  ' })).toEqual({ label: 'General' })
+  })
+
+  it('maps the note field, including an explicit clear', () => {
+    expect(buildLinkUpdatePayload({ note: 'Read later' })).toEqual({ note: 'Read later' })
+    expect(buildLinkUpdatePayload({ note: null })).toEqual({ note: null })
   })
 })

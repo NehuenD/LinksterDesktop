@@ -18,7 +18,9 @@ export default defineConfig({
     }
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    // A sandboxed preload cannot resolve bare modules or use ESM imports, so the
+    // output must be a single CommonJS file with all dependencies bundled.
+    plugins: [externalizeDepsPlugin({ exclude: ['zod'] })],
     resolve: {
       alias: {
         '@shared': resolve('src/shared')
@@ -26,7 +28,11 @@ export default defineConfig({
     },
     build: {
       rollupOptions: {
-        input: { index: resolve('src/preload/index.ts') }
+        input: { index: resolve('src/preload/index.ts') },
+        output: {
+          format: 'cjs',
+          entryFileNames: 'index.cjs'
+        }
       }
     }
   },
@@ -41,7 +47,10 @@ export default defineConfig({
     },
     build: {
       rollupOptions: {
-        input: { index: resolve('src/renderer/index.html') }
+        input: {
+          index: resolve('src/renderer/index.html'),
+          quickCapture: resolve('src/renderer/quick-capture.html')
+        }
       }
     }
   }

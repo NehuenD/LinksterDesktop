@@ -7,21 +7,32 @@ export default function BulkActionBar() {
   const labels = useLinksStore((state) => state.labels)
   const bulkUpdate = useLinksStore((state) => state.bulkUpdate)
   const bulkDelete = useLinksStore((state) => state.bulkDelete)
+  const clearLabel = useLinksStore((state) => state.clearLabel)
   const clearSelection = useLinksStore((state) => state.clearSelection)
   const selectAllVisible = useLinksStore((state) => state.selectAllVisible)
+  const selectAllMatching = useLinksStore((state) => state.selectAllMatching)
   const [confirming, setConfirming] = useState(false)
 
   if (count === 0) return null
 
-  const actionClass = 'rounded-lg border border-subtle px-3 py-1.5 text-xs transition hover:bg-hover'
+  const actionClass =
+    'rounded-md border border-subtle px-2.5 py-1 text-xs text-primary transition hover:border-strong hover:bg-hover'
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-2 border-b border-subtle bg-raised px-6 py-2 text-sm">
-        <span className="text-muted">{count} selected</span>
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-subtle bg-panel px-4 py-1.5 text-xs">
+        <span className="mr-1 font-medium text-primary">{count} selected</span>
 
         <button type="button" className={actionClass} onClick={selectAllVisible}>
-          Select all
+          Select loaded
+        </button>
+        <button
+          type="button"
+          className={actionClass}
+          onClick={() => void selectAllMatching()}
+          title="Select every link matching the current filters, not just the loaded page"
+        >
+          Select matching
         </button>
 
         <button type="button" className={actionClass} onClick={() => void bulkUpdate({ isRead: true })}>
@@ -41,6 +52,13 @@ export default function BulkActionBar() {
         >
           Archive
         </button>
+        <button
+          type="button"
+          className={actionClass}
+          onClick={() => void bulkUpdate({ isArchived: false })}
+        >
+          Unarchive
+        </button>
 
         <select
           defaultValue=""
@@ -50,7 +68,7 @@ export default function BulkActionBar() {
               event.target.value = ''
             }
           }}
-          className="rounded-lg border border-subtle bg-raised px-2 py-1.5 text-xs outline-none focus:border-accent"
+          className="rounded-md border border-subtle bg-raised px-2 py-1 text-xs outline-none transition focus:border-accent/60"
         >
           <option value="">Move to label…</option>
           {labels.map((label) => (
@@ -59,10 +77,13 @@ export default function BulkActionBar() {
             </option>
           ))}
         </select>
+        <button type="button" className={actionClass} onClick={() => void clearLabel()}>
+          Clear label
+        </button>
 
         <button
           type="button"
-          className="rounded-lg px-3 py-1.5 text-xs text-accent transition hover:opacity-80"
+          className="rounded-md px-2.5 py-1 text-xs text-danger transition hover:bg-danger/10"
           onClick={() => setConfirming(true)}
         >
           Delete

@@ -1,5 +1,6 @@
-import { dialog, ipcMain } from 'electron'
+import { dialog } from 'electron'
 import { IPC, fail, ok } from '@shared/contract/ipc'
+import { secureHandle } from '../guard'
 import {
   copyScreenshotPath,
   deleteScreenshot,
@@ -19,7 +20,7 @@ function folderInfo(): { folder: string | null; detected: string | null } {
 }
 
 export function registerScreenshotHandlers(): void {
-  ipcMain.handle(IPC.screenshots.list, async () => {
+  secureHandle(IPC.screenshots.list, async () => {
     try {
       return ok(await listScreenshots())
     } catch (error) {
@@ -27,9 +28,9 @@ export function registerScreenshotHandlers(): void {
     }
   })
 
-  ipcMain.handle(IPC.screenshots.getFolder, () => ok(folderInfo()))
+  secureHandle(IPC.screenshots.getFolder, () => ok(folderInfo()))
 
-  ipcMain.handle(IPC.screenshots.chooseFolder, async () => {
+  secureHandle(IPC.screenshots.chooseFolder, async () => {
     try {
       const result = await dialog.showOpenDialog({
         properties: ['openDirectory'],
@@ -43,7 +44,7 @@ export function registerScreenshotHandlers(): void {
     }
   })
 
-  ipcMain.handle(IPC.screenshots.reveal, async (_event, filePath: unknown) => {
+  secureHandle(IPC.screenshots.reveal, async (_event, filePath: unknown) => {
     try {
       if (typeof filePath !== 'string') return fail('INVALID_PATH', 'A file path is required.')
       await revealScreenshot(filePath)
@@ -53,7 +54,7 @@ export function registerScreenshotHandlers(): void {
     }
   })
 
-  ipcMain.handle(IPC.screenshots.copyPath, async (_event, filePath: unknown) => {
+  secureHandle(IPC.screenshots.copyPath, async (_event, filePath: unknown) => {
     try {
       if (typeof filePath !== 'string') return fail('INVALID_PATH', 'A file path is required.')
       await copyScreenshotPath(filePath)
@@ -63,7 +64,7 @@ export function registerScreenshotHandlers(): void {
     }
   })
 
-  ipcMain.handle(IPC.screenshots.delete, async (_event, filePath: unknown) => {
+  secureHandle(IPC.screenshots.delete, async (_event, filePath: unknown) => {
     try {
       if (typeof filePath !== 'string') return fail('INVALID_PATH', 'A file path is required.')
       await deleteScreenshot(filePath)
