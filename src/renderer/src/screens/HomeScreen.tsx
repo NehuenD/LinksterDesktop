@@ -14,6 +14,7 @@ import { secondaryButtonClass } from '../components/ui-classes'
 import { api } from '../lib/api'
 import { useGlobalShortcuts } from '../lib/use-global-shortcuts'
 import { useClipboardStore } from '../store/clipboard-store'
+import { useAuthStore } from '../store/auth-store'
 import { useLinksStore } from '../store/links-store'
 import { useUiStore } from '../store/ui-store'
 import ScreenshotsScreen from './ScreenshotsScreen'
@@ -72,6 +73,7 @@ export default function HomeScreen() {
   const setPaletteOpen = useUiStore((state) => state.setPaletteOpen)
   const addDialogOpen = useUiStore((state) => state.addDialogOpen)
   const setAddDialogOpen = useUiStore((state) => state.setAddDialogOpen)
+  const userId = useAuthStore((state) => state.user?.id ?? null)
 
   const [text, setText] = useState(search)
 
@@ -82,9 +84,11 @@ export default function HomeScreen() {
   })
 
   useEffect(() => {
+    // userId is a dependency so an account switch (which resets the stores)
+    // refetches immediately instead of leaving the library empty.
     void load()
     void loadClipboard()
-  }, [load, loadClipboard])
+  }, [load, loadClipboard, userId])
 
   useEffect(() => {
     return api.links.onChanged(() => {

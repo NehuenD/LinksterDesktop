@@ -10,6 +10,7 @@ import YouTubeCard from '../components/YouTubeCard'
 import { secondaryButtonClass } from '../components/ui-classes'
 import { api } from '../lib/api'
 import { useEscapeToLibrary } from '../lib/use-escape-to-library'
+import { useAuthStore } from '../store/auth-store'
 import { useLinksStore } from '../store/links-store'
 import { useUiStore } from '../store/ui-store'
 import { useYouTubeStore } from '../store/youtube-store'
@@ -41,6 +42,7 @@ export default function YouTubeScreen() {
   const undoExpiresAt = useYouTubeStore((state) => state.undoExpiresAt)
   const load = useYouTubeStore((state) => state.load)
   const loadMore = useYouTubeStore((state) => state.loadMore)
+  const userId = useAuthStore((state) => state.user?.id ?? null)
   const setFilter = useYouTubeStore((state) => state.setFilter)
   const setSearch = useYouTubeStore((state) => state.setSearch)
   const setSort = useYouTubeStore((state) => state.setSort)
@@ -92,7 +94,7 @@ export default function YouTubeScreen() {
 
   useEffect(() => {
     void load()
-  }, [load])
+  }, [load, userId])
 
   useEffect(() => {
     return api.links.onChanged(() => {

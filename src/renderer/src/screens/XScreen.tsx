@@ -9,6 +9,7 @@ import XPostCard from '../components/XPostCard'
 import { secondaryButtonClass } from '../components/ui-classes'
 import { api } from '../lib/api'
 import { useEscapeToLibrary } from '../lib/use-escape-to-library'
+import { useAuthStore } from '../store/auth-store'
 import { useLinksStore } from '../store/links-store'
 import { useUiStore } from '../store/ui-store'
 import { useXStore } from '../store/x-store'
@@ -43,6 +44,7 @@ export default function XScreen() {
   const undoExpiresAt = useXStore((state) => state.undoExpiresAt)
   const load = useXStore((state) => state.load)
   const loadMore = useXStore((state) => state.loadMore)
+  const userId = useAuthStore((state) => state.user?.id ?? null)
   const setSearch = useXStore((state) => state.setSearch)
   const setFilter = useXStore((state) => state.setFilter)
   const setSort = useXStore((state) => state.setSort)
@@ -89,7 +91,7 @@ export default function XScreen() {
 
   useEffect(() => {
     void load()
-  }, [load])
+  }, [load, userId])
 
   useEffect(() => {
     return api.links.onPendingChanged(() => {
